@@ -45,7 +45,8 @@ public class CreateTree : MonoBehaviour
 
         if (newChara.children.Length != 0)
         {
-            //GenerateChildren(newChara.children, pos);
+            Vector2 tempPos = pos;
+            GenerateChildren(newChara.children, tempPos);
         }
 
         if (newChara.partner != "")
@@ -75,7 +76,16 @@ public class CreateTree : MonoBehaviour
 
     void GenerateChildren(string[] strings, Vector2 pos)
     {
+        GameObject newBar = Instantiate(prefabBarVertical);
+        newBar.transform.SetParent(transform, false);
+        Vector2 posVer = pos;
+        posVer.y += 200;
+        newBar.transform.position = pos;
 
+        pos.y += 400;
+        GameObject barHorizontal = Instantiate(prefabBarHorizontal);
+        ((RectTransform)barHorizontal.transform).sizeDelta = new Vector2(300 * strings.Length, 10);
+        transform.position = pos;
 
         foreach (string s in strings)
         {
