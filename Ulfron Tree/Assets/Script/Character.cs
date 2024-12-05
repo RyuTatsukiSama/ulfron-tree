@@ -12,19 +12,19 @@ public class Character
     {
         name = _name;
         partner = _partner;
-        if (!File.Exists($"{Application.dataPath}/Json/{partner}.json"))
+        if (!File.Exists($"{Application.streamingAssetsPath}/Json/{partner}.json"))
         {
             Character newChara = new Character(partner, name, _children, true);
         }
         children = _children;
         foreach (string child in children)
         {
-            if (!File.Exists($"{Application.dataPath}/Json/{child}.json"))
+            if (!File.Exists($"{Application.streamingAssetsPath}/Json/{child}.json"))
             {
                 Character newChara = new Character(child, true);
             }
         }
-        string path = $"{Application.dataPath}/Json/{name}.json";
+        string path = $"{Application.streamingAssetsPath}/Json/{name}.json";
         File.WriteAllText(path, JsonUtility.ToJson(this,true));
     }
 
@@ -33,7 +33,7 @@ public class Character
         name = _name;
         partner = _partner;
         children = _children;
-        string path = $"{Application.dataPath}/Json/{name}.json";
+        string path = $"{Application.streamingAssetsPath}/Json/{name}.json";
         File.WriteAllText(path, JsonUtility.ToJson(this, true));
     }
 
@@ -42,7 +42,7 @@ public class Character
         name = _name;
         partner = null;
         children = null;
-        string path = $"{Application.dataPath}/Json/{name}.json";
+        string path = $"{Application.streamingAssetsPath}/Json/{name}.json";
         File.WriteAllText(path, JsonUtility.ToJson(this, true));
     }
 }

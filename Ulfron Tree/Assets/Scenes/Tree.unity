@@ -314,6 +314,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prefabCase: {fileID: 5394812181811570660, guid: 24905055d4183214185a7b4763b6b095, type: 3}
   prefabBarHorizontal: {fileID: 3322424885692017381, guid: ab57dc7f0f19eb54a967136cd4f43f00, type: 3}
+  prefabBarVertical: {fileID: 5444134468989378025, guid: b1f2d09f438a74745b451560473ed0f9, type: 3}
 --- !u!1 &2010837635
 GameObject:
   m_ObjectHideFlags: 0
