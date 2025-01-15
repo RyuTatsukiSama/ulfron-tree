@@ -16,10 +16,10 @@ public class AddTree : MonoBehaviour
         Character Zekio = new Character("Zekio", "Claire", ZCChildren);
 
         string[] HEhildren = new string[4];
-        ZCChildren[0] = "Lim";
-        ZCChildren[1] = "Emma";
-        ZCChildren[2] = "Yuko";
-        ZCChildren[3] = "Torch";
+        HEhildren[0] = "Lim";
+        HEhildren[1] = "Emma";
+        HEhildren[2] = "Yuko";
+        HEhildren[3] = "Torch";
         Character Haru = new Character("Haru", "Elia", HEhildren);
 
 

@@ -13,9 +13,8 @@ public class CreateTree : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        string path = $"{Application.streamingAssetsPath}/Json/Zekio.json";
         Vector2 pos = new Vector2(960, 540);
-        GenerateCase(path, pos);
+        GenerateCase("Zekio", pos);
     }
 
     // Update is called once per frame
@@ -24,9 +23,10 @@ public class CreateTree : MonoBehaviour
 
     }
 
-    void GenerateCase(string path, Vector2 pos)
+    void GenerateCase(string name, Vector2 pos)
     {
-        Character newChara = JsonUtility.FromJson<Character>(File.ReadAllText(path));
+        Character newChara = new Character();
+        RSaveClass<Character>.Load(newChara, false, name);
 
         if (newChara.partner != "")
         {
@@ -37,37 +37,41 @@ public class CreateTree : MonoBehaviour
 
         GameObject newCase = Instantiate(prefabCase);
         newCase.transform.SetParent(transform);
+        newCase.transform.name = newChara.cName;
 
         foreach (TextMeshProUGUI text in newCase.GetComponentsInChildren<TextMeshProUGUI>())
         {
-            text.text = newChara.name;
+            text.text = newChara.cName;
         }
+        Debug.Log(pos);
 
         if (newChara.children.Length != 0)
         {
-            Vector2 tempPos = pos;
-            GenerateChildren(newChara.children, tempPos);
+            GenerateChildren(newChara.children, pos);
         }
+
+        Debug.Log(pos);
 
         if (newChara.partner != "")
         {
             GeneratePartner(newChara.partner, pos);
-            pos.x -= 200;
         }
+        Debug.Log(pos);
         newCase.transform.position = pos;
     }
 
     void GeneratePartner(string name, Vector2 pos)
     {
-        string path = $"{Application.streamingAssetsPath}/Json/{name}.json";
-        Character newChara = JsonUtility.FromJson<Character>(File.ReadAllText(path));
+        Character newChara = new Character();
+        RSaveClass<Character>.Load(newChara, false, name);
 
         GameObject newCase = Instantiate(prefabCase);
         newCase.transform.SetParent(transform);
+        newCase.transform.name = newChara.cName;
 
         foreach (TextMeshProUGUI text in newCase.GetComponentsInChildren<TextMeshProUGUI>())
         {
-            text.text = newChara.name;
+            text.text = newChara.cName;
         }
 
         pos.x += 200;
@@ -89,15 +93,17 @@ public class CreateTree : MonoBehaviour
 
         foreach (string s in strings)
         {
-            string path = $"{Application.streamingAssetsPath}/Json/{s}.json";
-            Character newChara = JsonUtility.FromJson<Character>(File.ReadAllText(path));
+            string path = $"{Application.persistentDataPath}/Saves/{s}.json";
+            Character newChara = new Character();
+            RSaveClass<Character>.Load(newChara, false, s);
 
             GameObject newCase = Instantiate(prefabCase);
             newCase.transform.SetParent(transform);
+            newCase.transform.name = newChara.cName;
 
             foreach (TextMeshProUGUI text in newCase.GetComponentsInChildren<TextMeshProUGUI>())
             {
-                text.text = newChara.name;
+                text.text = newChara.cName;
             }
         }
     }

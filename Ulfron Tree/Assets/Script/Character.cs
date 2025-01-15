@@ -3,46 +3,60 @@ using System.IO;
 
 public class Character
 {
-    public string name;
+    public string cName;
     public string partner;
     public string[] children;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    public Character()
+    {
+        cName = null;
+        partner = null;
+        children = null;
+    }
+
     public Character(string _name, string _partner, string[] _children)
     {
-        name = _name;
+        cName = _name;
         partner = _partner;
-        if (!File.Exists($"{Application.streamingAssetsPath}/Json/{partner}.json"))
+        bool exist;
+#if UNITY_EDITOR
+        exist = File.Exists($"{Application.dataPath}/Resources/Json/{partner}.json");
+#else
+            exist = File.Exists($"{Application.persistentDataPath}/Saves/{partner}.json");
+#endif
+        if (!exist)
         {
-            Character newChara = new Character(partner, name, _children, true);
+            Character newChara = new Character(partner, cName, _children, true);
         }
         children = _children;
         foreach (string child in children)
         {
-            if (!File.Exists($"{Application.streamingAssetsPath}/Json/{child}.json"))
+#if UNITY_EDITOR
+            exist = File.Exists($"{Application.dataPath}/Resources/Json/{child}.json");
+#else
+            exist = File.Exists($"{Application.persistentDataPath}/Saves/{child}.json");
+#endif
+            if (!exist)
             {
                 Character newChara = new Character(child, true);
             }
         }
-        string path = $"{Application.streamingAssetsPath}/Json/{name}.json";
-        File.WriteAllText(path, JsonUtility.ToJson(this,true));
+        RSaveClass<Character>.Save(this, false, cName);
     }
 
     Character(string _name, string _partner, string[] _children, bool isCreatedByPartner)
     {
-        name = _name;
+        cName = _name;
         partner = _partner;
         children = _children;
-        string path = $"{Application.streamingAssetsPath}/Json/{name}.json";
-        File.WriteAllText(path, JsonUtility.ToJson(this, true));
+        RSaveClass<Character>.Save(this, false, cName);
     }
 
     Character(string _name, bool isCreatedByParent)
     {
-        name = _name;
+        cName = _name;
         partner = null;
         children = null;
-        string path = $"{Application.streamingAssetsPath}/Json/{name}.json";
-        File.WriteAllText(path, JsonUtility.ToJson(this, true));
+        RSaveClass<Character>.Save(this, false, cName);
     }
 }
