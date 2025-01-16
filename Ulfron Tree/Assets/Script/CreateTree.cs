@@ -3,12 +3,15 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
 using TMPro;
+using System.Collections.Generic;
 
 public class CreateTree : MonoBehaviour
 {
     [SerializeField] GameObject prefabCase;
     [SerializeField] GameObject prefabBarHorizontal;
     [SerializeField] GameObject prefabBarVertical;
+
+    Dictionary<int,int> sizeGeneration = new Dictionary<int, int>();
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -27,6 +30,7 @@ public class CreateTree : MonoBehaviour
     {
         Character newChara = new Character();
         RSaveClass<Character>.Load(newChara, false, name);
+        GetGenerationSize(newChara, 0);
 
         if (newChara.partner != "")
         {
@@ -43,21 +47,22 @@ public class CreateTree : MonoBehaviour
         {
             text.text = newChara.cName;
         }
-        Debug.Log(pos);
-
-        if (newChara.children.Length != 0)
-        {
-            GenerateChildren(newChara.children, pos);
-        }
-
-        Debug.Log(pos);
 
         if (newChara.partner != "")
         {
             GeneratePartner(newChara.partner, pos);
+            Vector2 foo = pos;
+            foo.x -= 200;
+            newCase.transform.position = foo;
+            if (newChara.children.Length != 0)
+            {
+                GenerateChildren(newChara.children, pos);
+            }
         }
-        Debug.Log(pos);
-        newCase.transform.position = pos;
+        else
+        {
+            newCase.transform.position = pos;
+        }
     }
 
     void GeneratePartner(string name, Vector2 pos)
@@ -82,18 +87,19 @@ public class CreateTree : MonoBehaviour
     {
         GameObject newBar = Instantiate(prefabBarVertical);
         newBar.transform.SetParent(transform, false);
-        Vector2 posVer = pos;
-        posVer.y += 200;
-        newBar.transform.position = pos;
+        Vector2 newPos = pos;
+        newPos.y -= 200;
+        newBar.transform.position = newPos;
 
-        pos.y += 400;
         GameObject barHorizontal = Instantiate(prefabBarHorizontal);
         ((RectTransform)barHorizontal.transform).sizeDelta = new Vector2(300 * strings.Length, 10);
-        transform.position = pos;
+        barHorizontal.transform.SetParent(transform, false);
+        newPos = pos;
+        newPos.y -= 400;
+        barHorizontal.transform.position = newPos;
 
         foreach (string s in strings)
         {
-            string path = $"{Application.persistentDataPath}/Saves/{s}.json";
             Character newChara = new Character();
             RSaveClass<Character>.Load(newChara, false, s);
 
@@ -106,5 +112,33 @@ public class CreateTree : MonoBehaviour
                 text.text = newChara.cName;
             }
         }
+    }
+
+    int GetGenerationSize(Character parent, int generation)
+    {
+        int size = 300;
+
+        if (parent.partner != null)
+        {
+            size += 300;
+        }
+
+        if (parent.children != null && parent.children.Length > 2)
+        {
+            foreach (string child in parent.children)
+            {
+                Character character = new Character();
+                RSaveClass<Character>.Load(character, false, child);
+                size += GetGenerationSize(character, generation + 1);
+            }
+        }
+        int foo = 0;
+        if (!sizeGeneration.TryGetValue(generation, out foo))
+        {
+            sizeGeneration[generation] = 0;
+        }
+
+        sizeGeneration[generation] += size;
+        return size;
     }
 }

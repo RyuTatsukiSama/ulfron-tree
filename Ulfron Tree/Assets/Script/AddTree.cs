@@ -27,6 +27,10 @@ public class AddTree : MonoBehaviour
         HCChildren[0] = "Adam";
         HCChildren[1] = "Burn";
         Character Hiro = new Character("Hiro", "Clara", HCChildren);
+
+        Character Iris = new Character("Iris", "Nétior", null);
+
+        Character Mia = new Character("Mia", "Eto", null);
     }
     
     public void AddToTree()

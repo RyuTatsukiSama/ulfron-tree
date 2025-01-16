@@ -255,6 +255,8 @@ GameObject:
   - component: {fileID: 1039239166}
   - component: {fileID: 1039239165}
   - component: {fileID: 1039239169}
+  - component: {fileID: 1039239171}
+  - component: {fileID: 1039239170}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -359,6 +361,48 @@ MonoBehaviour:
   prefabCase: {fileID: 5394812181811570660, guid: 24905055d4183214185a7b4763b6b095, type: 3}
   prefabBarHorizontal: {fileID: 3322424885692017381, guid: ab57dc7f0f19eb54a967136cd4f43f00, type: 3}
   prefabBarVertical: {fileID: 5444134468989378025, guid: b1f2d09f438a74745b451560473ed0f9, type: 3}
+--- !u!114 &1039239170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1039239164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24a2c93bf66de934190502e2b0c29a01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1039239171
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1039239164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Actions: {fileID: -944628639613478452, guid: 6af35f45826e3f74695db630df68b260, type: 3}
+  m_NotificationBehavior: 0
+  m_UIInputModule: {fileID: 417297322}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents: []
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: Keyboard&Mouse
+  m_DefaultActionMap: UI
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 2010837637}
 --- !u!1 &2010837635
 GameObject:
   m_ObjectHideFlags: 0
