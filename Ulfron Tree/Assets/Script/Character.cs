@@ -29,16 +29,19 @@ public class Character
             Character newChara = new Character(partner, cName, _children, true);
         }
         children = _children;
-        foreach (string child in children)
+        if (children != null)
         {
+            foreach (string child in children)
+            {
 #if UNITY_EDITOR
-            exist = File.Exists($"{Application.dataPath}/Resources/Json/{child}.json");
+                exist = File.Exists($"{Application.dataPath}/Resources/Json/{child}.json");
 #else
             exist = File.Exists($"{Application.persistentDataPath}/Saves/{child}.json");
 #endif
-            if (!exist)
-            {
-                Character newChara = new Character(child, true);
+                if (!exist)
+                {
+                    Character newChara = new Character(child, true);
+                }
             }
         }
         RSaveClass<Character>.Save(this, false, cName);

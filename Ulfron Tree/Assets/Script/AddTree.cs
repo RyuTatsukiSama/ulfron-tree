@@ -9,7 +9,7 @@ public class AddTree : MonoBehaviour
         ZCChildren[0] = "Haru";
         ZCChildren[1] = "Hiro";
         ZCChildren[2] = "Lila";
-        ZCChildren[3] = "Lila";
+        ZCChildren[3] = "Lily";
         ZCChildren[4] = "Iris";
         ZCChildren[5] = "Mia";
         ZCChildren[6] = "Loan";

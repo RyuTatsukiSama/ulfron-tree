@@ -4,6 +4,8 @@ using UnityEngine.UI;
 using System.IO;
 using TMPro;
 using System.Collections.Generic;
+using NUnit.Framework.Internal;
+using UnityEngine.InputSystem.HID;
 
 public class CreateTree : MonoBehaviour
 {
@@ -11,13 +13,15 @@ public class CreateTree : MonoBehaviour
     [SerializeField] GameObject prefabBarHorizontal;
     [SerializeField] GameObject prefabBarVertical;
 
-    Dictionary<int,int> sizeGeneration = new Dictionary<int, int>();
+    Dictionary<int, int> sizeGeneration = new Dictionary<int, int>();
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         Vector2 pos = new Vector2(960, 540);
-        GenerateCase("Zekio", pos);
+        Character zekio = new Character();
+        RSaveClass<Character>.Load(zekio, false, "Zekio");
+        GenerateCase(zekio, pos);
     }
 
     // Update is called once per frame
@@ -26,13 +30,9 @@ public class CreateTree : MonoBehaviour
 
     }
 
-    void GenerateCase(string name, Vector2 pos)
+    void GenerateCase(Character newChara, Vector2 pos)
     {
-        Character newChara = new Character();
-        RSaveClass<Character>.Load(newChara, false, name);
-        GetGenerationSize(newChara, 0);
-
-        if (newChara.partner != "")
+        if (newChara.partner != null)
         {
             GameObject newBar = Instantiate(prefabBarHorizontal);
             newBar.transform.SetParent(transform, false);
@@ -48,13 +48,13 @@ public class CreateTree : MonoBehaviour
             text.text = newChara.cName;
         }
 
-        if (newChara.partner != "")
+        if (newChara.partner != null)
         {
             GeneratePartner(newChara.partner, pos);
             Vector2 foo = pos;
             foo.x -= 200;
             newCase.transform.position = foo;
-            if (newChara.children.Length != 0)
+            if (newChara.children != null)
             {
                 GenerateChildren(newChara.children, pos);
             }
@@ -85,60 +85,104 @@ public class CreateTree : MonoBehaviour
 
     void GenerateChildren(string[] strings, Vector2 pos)
     {
-        GameObject newBar = Instantiate(prefabBarVertical);
-        newBar.transform.SetParent(transform, false);
-        Vector2 newPos = pos;
-        newPos.y -= 200;
-        newBar.transform.position = newPos;
+        // Générer la barre reliant lien parent à liens frère et soeur
+        GameObject barParentsToSiblings = Instantiate(prefabBarVertical);
+        barParentsToSiblings.transform.SetParent(transform, false);
+        Vector2 barPos = pos;
+        barPos.y -= ((RectTransform)barParentsToSiblings.transform).sizeDelta.y / 2;
+        barParentsToSiblings.transform.position = barPos;
 
-        GameObject barHorizontal = Instantiate(prefabBarHorizontal);
-        ((RectTransform)barHorizontal.transform).sizeDelta = new Vector2(300 * strings.Length, 10);
-        barHorizontal.transform.SetParent(transform, false);
-        newPos = pos;
-        newPos.y -= 400;
-        barHorizontal.transform.position = newPos;
+        // Générer la barre reliant les frères et soeurs
+        GameObject barSiblings = Instantiate(prefabBarHorizontal);
+        ((RectTransform)barSiblings.transform).sizeDelta = new Vector2(GetGenerationSize(strings), 10); // Ici à la place du strings.Length appeler le GetSizeGeneration
+        barSiblings.transform.SetParent(transform, false);
+        barPos = pos;
+        barPos.y -= ((RectTransform)barParentsToSiblings.transform).sizeDelta.y;
+        barSiblings.transform.position = barPos;
 
-        foreach (string s in strings)
+        // Génère les enfants
+        Vector2 siblingsPos = barSiblings.transform.position; // Poisition d'un enfant sur la barre frères et soeurs
+        siblingsPos.y += ((RectTransform)barSiblings.transform).sizeDelta.y / 2;
+        siblingsPos.x -= ((RectTransform)barSiblings.transform).sizeDelta.x / 2;
+        for (int i = 0; i < strings.Length;i++)
         {
             Character newChara = new Character();
-            RSaveClass<Character>.Load(newChara, false, s);
+            RSaveClass<Character>.Load(newChara, false, strings[i]);
 
-            GameObject newCase = Instantiate(prefabCase);
-            newCase.transform.SetParent(transform);
-            newCase.transform.name = newChara.cName;
-
-            foreach (TextMeshProUGUI text in newCase.GetComponentsInChildren<TextMeshProUGUI>())
+            // Génère sa barre qui le relie à la barre frères et soeurs
+            GameObject barSiblingsToCase = Instantiate(prefabBarVertical);
+            ((RectTransform)barSiblingsToCase.transform).sizeDelta = new Vector2(10, 200); ;
+            barSiblingsToCase.transform.SetParent(transform, false);
+            // Décalage du précédent siblings si il n'est pas le premier de la liste
+            if (i != 0)
             {
-                text.text = newChara.cName;
+                if (newChara.children != null && newChara.children.Length > 2)
+                {
+                    siblingsPos.x += GetGenerationSize(newChara.children) / 2;
+                }
+                else if (newChara.partner != null)
+                {
+                    siblingsPos.x += 350;
+                }
+                else
+                {
+                    siblingsPos.x += 150;
+                }
+            }
+
+            // Put the position
+            siblingsPos.y -= ((RectTransform)barSiblingsToCase.transform).sizeDelta.y / 2;
+            barSiblingsToCase.transform.position = siblingsPos;
+
+            // Génère sa case
+            siblingsPos.y -= ((RectTransform)barSiblingsToCase.transform).sizeDelta.y / 2;
+            GenerateCase(newChara, siblingsPos);
+
+            // Décale pour le prochains siblings
+            if (newChara.children != null && newChara.children.Length > 2)
+            {
+                siblingsPos.x += GetGenerationSize(newChara.children)/2;
+            }
+            else if (newChara.partner != null)
+            {
+                siblingsPos.x += 350;
+            }
+            else
+            {
+                siblingsPos.x += 150;
             }
         }
     }
 
-    int GetGenerationSize(Character parent, int generation)
+    int GetGenerationSize(string[] children)
     {
-        int size = 300;
+        int result = 0;
 
-        if (parent.partner != null)
+        for (int i = 0; i < children.Length;i++)
         {
-            size += 300;
-        }
+            int tempResult = 300;
+            Character child = new Character();
+            RSaveClass<Character>.Load(child, false, children[i]);
 
-        if (parent.children != null && parent.children.Length > 2)
-        {
-            foreach (string child in parent.children)
+            if (child.children != null && child.children.Length > 2)
             {
-                Character character = new Character();
-                RSaveClass<Character>.Load(character, false, child);
-                size += GetGenerationSize(character, generation + 1);
+                tempResult = GetGenerationSize(child.children);
+            }
+            else if (child.partner != null)
+            {
+                tempResult = 700;
+            }
+
+            if (i == children.Length - 1 || i == 0)
+            {
+                result += tempResult/2;
+            }
+            else
+            {
+                result += tempResult;
             }
         }
-        int foo = 0;
-        if (!sizeGeneration.TryGetValue(generation, out foo))
-        {
-            sizeGeneration[generation] = 0;
-        }
 
-        sizeGeneration[generation] += size;
-        return size;
+        return result;
     }
 }

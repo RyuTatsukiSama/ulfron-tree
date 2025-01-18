@@ -97,7 +97,6 @@ public static class RSaveClass<T> where T : class
         string json = ReadSaveFile(fileName);
         if (json == string.Empty)
         {
-            RLogger.Log(LogLevel.ERROR, $"The Json is empty");
             return;
         }
         T saveData = JsonConvert.DeserializeObject<T>(json);
