@@ -94,7 +94,7 @@ public class CreateTree : MonoBehaviour
 
         // Générer la barre reliant les frères et soeurs
         GameObject barSiblings = Instantiate(prefabBarHorizontal);
-        ((RectTransform)barSiblings.transform).sizeDelta = new Vector2(GetGenerationSize(strings), 10); // Ici à la place du strings.Length appeler le GetSizeGeneration
+        ((RectTransform)barSiblings.transform).sizeDelta = new Vector2(GetGenerationSize(strings)-200, 10); // Ici à la place du strings.Length appeler le GetSizeGeneration
         barSiblings.transform.SetParent(transform, false);
         barPos = pos;
         barPos.y -= ((RectTransform)barParentsToSiblings.transform).sizeDelta.y;
@@ -130,13 +130,14 @@ public class CreateTree : MonoBehaviour
                 }
             }
 
+            Vector2 tempPos = siblingsPos;
             // Put the position
-            siblingsPos.y -= ((RectTransform)barSiblingsToCase.transform).sizeDelta.y / 2;
-            barSiblingsToCase.transform.position = siblingsPos;
+            tempPos.y -= ((RectTransform)barSiblingsToCase.transform).sizeDelta.y / 2;
+            barSiblingsToCase.transform.position = tempPos;
 
             // Génère sa case
-            siblingsPos.y -= ((RectTransform)barSiblingsToCase.transform).sizeDelta.y / 2;
-            GenerateCase(newChara, siblingsPos);
+            tempPos.y -= ((RectTransform)barSiblingsToCase.transform).sizeDelta.y / 2;
+            GenerateCase(newChara, tempPos);
 
             // Décale pour le prochains siblings
             if (newChara.children != null && newChara.children.Length > 2)
@@ -175,6 +176,7 @@ public class CreateTree : MonoBehaviour
 
             if (i == children.Length - 1 || i == 0)
             {
+                result += 100;
                 result += tempResult/2;
             }
             else
