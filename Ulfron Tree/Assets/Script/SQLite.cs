@@ -1,6 +1,6 @@
 using System.Data;
-using Unity.VisualScripting.Dependencies.Sqlite;
 using UnityEngine;
+using Mono.Data.Sqlite;
 
 public class SQLite : MonoBehaviour
 {
@@ -15,13 +15,13 @@ public class SQLite : MonoBehaviour
     {
         string filepath = Application.dataPath + DATABASE_NAME;
         conn = "URI=file:" + filepath;
-        //dbconn = new SQLiteConnection(conn);
+        dbconn = new SqliteConnection(conn);
         CreateTable();
     }
 
     private void CreateTable()
     {
-        //using (dbconn = new SQLiteConnection(conn))
+        using (dbconn = new SqliteConnection(conn))
         {
             dbconn.Open();
             dbcmd = dbconn.CreateCommand();
