@@ -7,17 +7,17 @@ public class AddTree : MonoBehaviour
     {
 
         string ZCChildren = "Haru_Hiro_Lila_Lily_Iris_Mia_Loan";
-        Character Zekio = new Character("Zekio", "Claire", ZCChildren);
+        CharacterDB Zekio = new CharacterDB("Zekio", "Claire", ZCChildren);
 
         string HEhildren = "Lim_Emma_Yuko_Torch";
-        Character Haru = new Character("Haru", "Elia", HEhildren);
+        CharacterDB Haru = new CharacterDB("Haru", "Elia", HEhildren);
 
         string HCChildren = "Adam_Burn";
-        Character Hiro = new Character("Hiro", "Clara", HCChildren);
+        CharacterDB Hiro = new CharacterDB("Hiro", "Clara", HCChildren);
 
-        Character Iris = new Character("Iris", "Nétior", null);
+        CharacterDB Iris = new CharacterDB("Iris", "Nétior", null);
 
-        Character Mia = new Character("Mia", "Eto", null);
+        CharacterDB Mia = new CharacterDB("Mia", "Eto", null);
     }
     
     public void AddToTree()

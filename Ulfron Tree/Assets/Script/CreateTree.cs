@@ -19,8 +19,8 @@ public class CreateTree : MonoBehaviour
     void Start()
     {
         Vector2 pos = new Vector2(960, 540);
-        Character zekio = new Character();
-        RSaveClass<Character>.Load(zekio, false, "Zekio");
+        CharacterDB zekio = new CharacterDB();
+        RSaveClass<CharacterDB>.Load(zekio, false, "Zekio");
         GenerateCase(zekio, pos);
     }
 
@@ -30,9 +30,9 @@ public class CreateTree : MonoBehaviour
 
     }
 
-    void GenerateCase(Character newChara, Vector2 pos)
+    void GenerateCase(CharacterDB newChara, Vector2 pos)
     {
-        if (newChara.partner != null)
+        if (newChara.data.Partner != null)
         {
             GameObject newBar = Instantiate(prefabBarHorizontal);
             newBar.transform.SetParent(transform, false);
@@ -41,22 +41,22 @@ public class CreateTree : MonoBehaviour
 
         GameObject newCase = Instantiate(prefabCase);
         newCase.transform.SetParent(transform);
-        newCase.transform.name = newChara.cName;
+        newCase.transform.name = newChara.data.CName;
 
         foreach (TextMeshProUGUI text in newCase.GetComponentsInChildren<TextMeshProUGUI>())
         {
-            text.text = newChara.cName;
+            text.text = newChara.data.CName;
         }
 
-        if (newChara.partner != null)
+        if (newChara.data.Partner != null)
         {
-            GeneratePartner(newChara.partner, pos);
+            GeneratePartner(newChara.data.Partner, pos);
             Vector2 foo = pos;
             foo.x -= 200;
             newCase.transform.position = foo;
-            if (newChara.children != null)
+            if (newChara.data.Children != null)
             {
-                GenerateChildren(newChara.children.Split("_"), pos);
+                GenerateChildren(newChara.data.Children.Split("_"), pos);
             }
         }
         else
@@ -67,16 +67,16 @@ public class CreateTree : MonoBehaviour
 
     void GeneratePartner(string name, Vector2 pos)
     {
-        Character newChara = new Character();
-        RSaveClass<Character>.Load(newChara, false, name);
+        CharacterDB newChara = new CharacterDB();
+        RSaveClass<CharacterDB>.Load(newChara, false, name);
 
         GameObject newCase = Instantiate(prefabCase);
         newCase.transform.SetParent(transform);
-        newCase.transform.name = newChara.cName;
+        newCase.transform.name = newChara.data.CName;
 
         foreach (TextMeshProUGUI text in newCase.GetComponentsInChildren<TextMeshProUGUI>())
         {
-            text.text = newChara.cName;
+            text.text = newChara.data.CName;
         }
 
         pos.x += 200;
@@ -106,8 +106,8 @@ public class CreateTree : MonoBehaviour
         siblingsPos.x -= ((RectTransform)barSiblings.transform).sizeDelta.x / 2;
         for (int i = 0; i < strings.Length;i++)
         {
-            Character newChara = new Character();
-            RSaveClass<Character>.Load(newChara, false, strings[i]);
+            CharacterDB newChara = new CharacterDB();
+            RSaveClass<CharacterDB>.Load(newChara, false, strings[i]);
 
             // Génère sa barre qui le relie à la barre frères et soeurs
             GameObject barSiblingsToCase = Instantiate(prefabBarVertical);
@@ -116,11 +116,11 @@ public class CreateTree : MonoBehaviour
             // Décalage du précédent siblings si il n'est pas le premier de la liste
             if (i != 0)
             {
-                if (newChara.children != null && newChara.children.Length > 2)
+                if (newChara.data.Children != null && newChara.data.Children.Length > 2)
                 {
-                    siblingsPos.x += GetGenerationSize(newChara.children.Split("_")) / 2;
+                    siblingsPos.x += GetGenerationSize(newChara.data.Children.Split("_")) / 2;
                 }
-                else if (newChara.partner != null)
+                else if (newChara.data.Partner != null)
                 {
                     siblingsPos.x += 350;
                 }
@@ -140,11 +140,11 @@ public class CreateTree : MonoBehaviour
             GenerateCase(newChara, tempPos);
 
             // Décale pour le prochains siblings
-            if (newChara.children != null && newChara.children.Length > 2)
+            if (newChara.data.Children != null && newChara.data.Children.Length > 2)
             {
-                siblingsPos.x += GetGenerationSize(newChara.children.Split("_"))/2;
+                siblingsPos.x += GetGenerationSize(newChara.data.Children.Split("_"))/2;
             }
-            else if (newChara.partner != null)
+            else if (newChara.data.Partner != null)
             {
                 siblingsPos.x += 350;
             }
@@ -162,14 +162,14 @@ public class CreateTree : MonoBehaviour
         for (int i = 0; i < children.Length;i++)
         {
             int tempResult = 300;
-            Character child = new Character();
-            RSaveClass<Character>.Load(child, false, children[i]);
+            CharacterDB child = new CharacterDB();
+            RSaveClass<CharacterDB>.Load(child, false, children[i]);
 
-            if (child.children != null && child.children.Length > 2)
+            if (child.data.Children != null && child.data.Children.Length > 2)
             {
-                tempResult = GetGenerationSize(child.children.Split("_"));
+                tempResult = GetGenerationSize(child.data.Children.Split("_"));
             }
-            else if (child.partner != null)
+            else if (child.data.Partner != null)
             {
                 tempResult = 700;
             }

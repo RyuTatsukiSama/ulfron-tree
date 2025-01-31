@@ -1,6 +1,6 @@
-using UnityEngine;
 
-public class CharacterDB
+
+public class CharacterData
 {
     public int id {  get; set; }
     public string CName { get; set; }
