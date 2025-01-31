@@ -10,15 +10,9 @@ public class ConnectionDB : MonoBehaviour
     {
         connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
 
-        string[] ZCChildren = new string[7];
-        ZCChildren[0] = "Haru";
-        ZCChildren[1] = "Hiro";
-        ZCChildren[2] = "Lila";
-        ZCChildren[3] = "Lily";
-        ZCChildren[4] = "Iris";
-        ZCChildren[5] = "Mia";
-        ZCChildren[6] = "Loan";
-        connection.Query<Results>($"INSERT INTO character (CName, Partner, Children) VALUES ('Zekio', 'Claire', {ZCChildren})");
+        string ZCChildren = "Haru_Hiro_Lila_Lily_Iris_Mia_Loan";
+        Character Zekio = new Character("Zekio","Claire",ZCChildren);
+        connection.Query<CharacterDB>($"INSERT INTO character (CName, Partner, Children) VALUES ('{Zekio.cName}', '{Zekio.partner}', '{Zekio.children}')");
 
     }
 
@@ -26,14 +20,14 @@ public class ConnectionDB : MonoBehaviour
     public void Create()
     {
         connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.Create);
-        connection.Query<Results>("CREATE TABLE character(CName TEXT, Partner TEXT, Children TEXT);");
+        connection.Query<CharacterDB>("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT, Partner TEXT, Children TEXT);");
     }
 
     [ContextMenu("Drop")]
     public void DropTable()
     {
         connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
-        connection.Query<Results>("DROP TABLE IF EXISTS characyer");
-        connection.Query<Results>("CREATE TABLE character(CName TEXT, Partner TEXT, Children TEXT);");
+        connection.Query<CharacterDB>("DROP TABLE IF EXISTS character");
+        connection.Query<CharacterDB>("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT, Partner TEXT, Children TEXT);");
     }
 }

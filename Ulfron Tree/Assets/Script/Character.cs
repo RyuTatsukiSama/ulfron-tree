@@ -5,7 +5,7 @@ public class Character
 {
     public string cName;
     public string partner;
-    public string[] children;
+    public string children;
 
     public Character()
     {
@@ -14,7 +14,7 @@ public class Character
         children = null;
     }
 
-    public Character(string _name, string _partner, string[] _children)
+    public Character(string _name, string _partner, string _children)
     {
         cName = _name;
         partner = _partner;
@@ -31,7 +31,7 @@ public class Character
         children = _children;
         if (children != null)
         {
-            foreach (string child in children)
+            foreach (string child in children.Split("_"))
             {
 #if UNITY_EDITOR
                 exist = File.Exists($"{Application.dataPath}/Resources/Json/{child}.json");
@@ -47,7 +47,7 @@ public class Character
         RSaveClass<Character>.Save(this, false, cName);
     }
 
-    Character(string _name, string _partner, string[] _children, bool isCreatedByPartner)
+    Character(string _name, string _partner, string _children, bool isCreatedByPartner)
     {
         cName = _name;
         partner = _partner;

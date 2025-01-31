@@ -1,8 +1,9 @@
 using UnityEngine;
 
-public class Results
+public class CharacterDB
 {
+    public int id {  get; set; }
     public string CName { get; set; }
     public string Partner { get; set; }
-    public string[] Children { get; set; }
+    public string Children { get; set; }
 }

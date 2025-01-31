@@ -1,13 +1,5 @@
 {
   "cName": "Claire",
   "partner": "Zekio",
-  "children": [
-    "Haru",
-    "Hiro",
-    "Lila",
-    "Lila",
-    "Iris",
-    "Mia",
-    "Loan"
-  ]
+  "children": "Haru_Hiro_Lila_Lily_Iris_Mia_Loan"
 }

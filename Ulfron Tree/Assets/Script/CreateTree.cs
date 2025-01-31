@@ -56,7 +56,7 @@ public class CreateTree : MonoBehaviour
             newCase.transform.position = foo;
             if (newChara.children != null)
             {
-                GenerateChildren(newChara.children, pos);
+                GenerateChildren(newChara.children.Split("_"), pos);
             }
         }
         else
@@ -118,7 +118,7 @@ public class CreateTree : MonoBehaviour
             {
                 if (newChara.children != null && newChara.children.Length > 2)
                 {
-                    siblingsPos.x += GetGenerationSize(newChara.children) / 2;
+                    siblingsPos.x += GetGenerationSize(newChara.children.Split("_")) / 2;
                 }
                 else if (newChara.partner != null)
                 {
@@ -142,7 +142,7 @@ public class CreateTree : MonoBehaviour
             // Décale pour le prochains siblings
             if (newChara.children != null && newChara.children.Length > 2)
             {
-                siblingsPos.x += GetGenerationSize(newChara.children)/2;
+                siblingsPos.x += GetGenerationSize(newChara.children.Split("_"))/2;
             }
             else if (newChara.partner != null)
             {
@@ -167,7 +167,7 @@ public class CreateTree : MonoBehaviour
 
             if (child.children != null && child.children.Length > 2)
             {
-                tempResult = GetGenerationSize(child.children);
+                tempResult = GetGenerationSize(child.children.Split("_"));
             }
             else if (child.partner != null)
             {

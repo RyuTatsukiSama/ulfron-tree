@@ -1,8 +1,5 @@
 {
   "cName": "Hiro",
   "partner": "Clara",
-  "children": [
-    "Adam",
-    "Burn"
-  ]
+  "children": "Adam_Burn"
 }

@@ -5,27 +5,14 @@ public class AddTree : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        string[] ZCChildren = new string[7];
-        ZCChildren[0] = "Haru";
-        ZCChildren[1] = "Hiro";
-        ZCChildren[2] = "Lila";
-        ZCChildren[3] = "Lily";
-        ZCChildren[4] = "Iris";
-        ZCChildren[5] = "Mia";
-        ZCChildren[6] = "Loan";
+
+        string ZCChildren = "Haru_Hiro_Lila_Lily_Iris_Mia_Loan";
         Character Zekio = new Character("Zekio", "Claire", ZCChildren);
 
-        string[] HEhildren = new string[4];
-        HEhildren[0] = "Lim";
-        HEhildren[1] = "Emma";
-        HEhildren[2] = "Yuko";
-        HEhildren[3] = "Torch";
+        string HEhildren = "Lim_Emma_Yuko_Torch";
         Character Haru = new Character("Haru", "Elia", HEhildren);
 
-
-        string[] HCChildren = new string[2];
-        HCChildren[0] = "Adam";
-        HCChildren[1] = "Burn";
+        string HCChildren = "Adam_Burn";
         Character Hiro = new Character("Hiro", "Clara", HCChildren);
 
         Character Iris = new Character("Iris", "Nétior", null);
