@@ -69,16 +69,17 @@ public class DBView : EditorWindow
         connection.Query<CharacterData>("DROP TABLE IF EXISTS character");
         connection.Query<CharacterData>("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT, Partner TEXT, Children TEXT);");
 
-        string ZCChildren = "Haru_Hiro_Lila_Lily_Iris_Mia_Loan_Izuki_Milie_Kari_Isy_Esther_Sacha_Ugo_Liam_Amane";
+        string ZCChildren = "Haru_Hiro_Lila_Lily_Iris_Mia_Loan_Izuki_Milie_Kari_Isy_Esther_Sacha_Ugo_Liam_Amane_Kira_Élimina";
         CharacterDB Zekio = new CharacterDB("Zekio", "Claire", ZCChildren);
 
         string HEhildren = "Lim_Emma_Yuko_Torch";
-        CharacterDB Haru = new CharacterDB("Haru", "Elia", HEhildren);
+        CharacterDB Haru = new CharacterDB("Haru", "Élia", HEhildren);
 
         string HCChildren = "Adam_Burn";
         CharacterDB Hiro = new CharacterDB("Hiro", "Clara", HCChildren);
 
-        CharacterDB Iris = new CharacterDB("Iris", "Nétior", null);
+        string INChildren = "Hélio";
+        CharacterDB Iris = new CharacterDB("Iris", "Nétior", INChildren);
 
         CharacterDB Mia = new CharacterDB("Mia", "Eto", null);
 
