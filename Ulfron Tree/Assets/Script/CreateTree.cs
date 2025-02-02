@@ -6,6 +6,9 @@ using TMPro;
 using System.Collections.Generic;
 using NUnit.Framework.Internal;
 using UnityEngine.InputSystem.HID;
+using static ConnectionDB;
+using System.Linq;
+using UnityEngine.UIElements;
 
 public class CreateTree : MonoBehaviour
 {
@@ -19,8 +22,13 @@ public class CreateTree : MonoBehaviour
     void Start()
     {
         Vector2 pos = new Vector2(960, 540);
-        CharacterDB zekio = new CharacterDB();
-        RSaveClass<CharacterDB>.Load(zekio, false, "Zekio");
+
+        List<CharacterData> results = connection.Query<CharacterData>("SELECT * FROM character WHERE CName='Zekio';");
+        CharacterDB zekio = new CharacterDB
+        {
+            data = results[0]
+        };
+
         GenerateCase(zekio, pos);
     }
 
@@ -32,7 +40,7 @@ public class CreateTree : MonoBehaviour
 
     void GenerateCase(CharacterDB newChara, Vector2 pos)
     {
-        if (newChara.data.Partner != null)
+        if (newChara.data.Partner != "")
         {
             GameObject newBar = Instantiate(prefabBarHorizontal);
             newBar.transform.SetParent(transform, false);
@@ -48,13 +56,13 @@ public class CreateTree : MonoBehaviour
             text.text = newChara.data.CName;
         }
 
-        if (newChara.data.Partner != null)
+        if (newChara.data.Partner != "")
         {
             GeneratePartner(newChara.data.Partner, pos);
             Vector2 foo = pos;
             foo.x -= 200;
             newCase.transform.position = foo;
-            if (newChara.data.Children != null)
+            if (newChara.data.Children != "")
             {
                 GenerateChildren(newChara.data.Children.Split("_"), pos);
             }
@@ -67,23 +75,26 @@ public class CreateTree : MonoBehaviour
 
     void GeneratePartner(string name, Vector2 pos)
     {
-        CharacterDB newChara = new CharacterDB();
-        RSaveClass<CharacterDB>.Load(newChara, false, name);
+        List<CharacterData> results = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{name}';");
+        CharacterDB partner = new CharacterDB
+        {
+            data = results[0]
+        };
 
         GameObject newCase = Instantiate(prefabCase);
         newCase.transform.SetParent(transform);
-        newCase.transform.name = newChara.data.CName;
+        newCase.transform.name = partner.data.CName;
 
         foreach (TextMeshProUGUI text in newCase.GetComponentsInChildren<TextMeshProUGUI>())
         {
-            text.text = newChara.data.CName;
+            text.text = partner.data.CName;
         }
 
         pos.x += 200;
         newCase.transform.position = pos;
     }
 
-    void GenerateChildren(string[] strings, Vector2 pos)
+    void GenerateChildren(string[] childrenNames, Vector2 pos)
     {
         // Générer la barre reliant lien parent à liens frère et soeur
         GameObject barParentsToSiblings = Instantiate(prefabBarVertical);
@@ -92,35 +103,76 @@ public class CreateTree : MonoBehaviour
         barPos.y -= ((RectTransform)barParentsToSiblings.transform).sizeDelta.y / 2;
         barParentsToSiblings.transform.position = barPos;
 
-        // Générer la barre reliant les frères et soeurs
-        GameObject barSiblings = Instantiate(prefabBarHorizontal);
-        ((RectTransform)barSiblings.transform).sizeDelta = new Vector2(GetGenerationSize(strings)-200, 10); // Ici à la place du strings.Length appeler le GetSizeGeneration
-        barSiblings.transform.SetParent(transform, false);
-        barPos = pos;
-        barPos.y -= ((RectTransform)barParentsToSiblings.transform).sizeDelta.y;
-        barSiblings.transform.position = barPos;
-
         // Génère les enfants
-        Vector2 siblingsPos = barSiblings.transform.position; // Poisition d'un enfant sur la barre frères et soeurs
-        siblingsPos.y += ((RectTransform)barSiblings.transform).sizeDelta.y / 2;
-        siblingsPos.x -= ((RectTransform)barSiblings.transform).sizeDelta.x / 2;
-        for (int i = 0; i < strings.Length;i++)
+        if (childrenNames.Length == 1) // Si il n'y a qu'un enfant
         {
-            CharacterDB newChara = new CharacterDB();
-            RSaveClass<CharacterDB>.Load(newChara, false, strings[i]);
-
-            // Génère sa barre qui le relie à la barre frères et soeurs
-            GameObject barSiblingsToCase = Instantiate(prefabBarVertical);
-            ((RectTransform)barSiblingsToCase.transform).sizeDelta = new Vector2(10, 200); ;
-            barSiblingsToCase.transform.SetParent(transform, false);
-            // Décalage du précédent siblings si il n'est pas le premier de la liste
-            if (i != 0)
+            List<CharacterData> results = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{childrenNames[0]}';");
+            CharacterDB currentChild = new CharacterDB
             {
-                if (newChara.data.Children != null && newChara.data.Children.Length > 2)
+                data = results[0]
+            };
+            barPos = pos;
+            barPos.y -= ((RectTransform)barParentsToSiblings.transform).sizeDelta.y;
+            GenerateCase(currentChild, barPos);
+        }
+        else // Si y'en a + d'un
+        {
+            // Générer la barre reliant les frères et soeurs
+            GameObject barSiblings = Instantiate(prefabBarHorizontal);
+            ((RectTransform)barSiblings.transform).sizeDelta = new Vector2(GetGenerationSize(childrenNames) - 200, 10); // Ici à la place du strings.Length appeler le GetSizeGeneration
+            barSiblings.transform.SetParent(transform, false);
+            barPos = pos;
+            barPos.y -= ((RectTransform)barParentsToSiblings.transform).sizeDelta.y;
+            barSiblings.transform.position = barPos;
+
+            Vector2 siblingsPos = barSiblings.transform.position; // Poisition d'un enfant sur la barre frères et soeurs
+            siblingsPos.y += ((RectTransform)barSiblings.transform).sizeDelta.y / 2;
+            siblingsPos.x -= ((RectTransform)barSiblings.transform).sizeDelta.x / 2;
+            for (int i = 0; i < childrenNames.Length; i++)
+            {
+                List<CharacterData> results = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{childrenNames[i]}';");
+                CharacterDB currentChild = new CharacterDB
                 {
-                    siblingsPos.x += GetGenerationSize(newChara.data.Children.Split("_")) / 2;
+                    data = results[0]
+                };
+
+                // Génère sa barre qui le relie à la barre frères et soeurs
+                GameObject barSiblingsToCase = Instantiate(prefabBarVertical);
+                ((RectTransform)barSiblingsToCase.transform).sizeDelta = new Vector2(10, 200); ;
+                barSiblingsToCase.transform.SetParent(transform, false);
+
+                // Décalage du précédent siblings si il n'est pas le premier de la liste
+                if (i != 0)
+                {
+                    if (currentChild.data.Children != "" && currentChild.data.Children.Split("_").Length > 2)
+                    {
+                        siblingsPos.x += GetGenerationSize(currentChild.data.Children.Split("_")) / 2;
+                    }
+                    else if (currentChild.data.Partner != "")
+                    {
+                        siblingsPos.x += 350;
+                    }
+                    else
+                    {
+                        siblingsPos.x += 150;
+                    }
                 }
-                else if (newChara.data.Partner != null)
+
+                Vector2 tempPos = siblingsPos;
+                // Put the position
+                tempPos.y -= ((RectTransform)barSiblingsToCase.transform).sizeDelta.y / 2;
+                barSiblingsToCase.transform.position = tempPos;
+
+                // Génère sa case
+                tempPos.y -= ((RectTransform)barSiblingsToCase.transform).sizeDelta.y / 2;
+                GenerateCase(currentChild, tempPos);
+
+                // Décale pour le prochains siblings
+                if (currentChild.data.Children != "" && currentChild.data.Children.Split("_").Length > 2)
+                {
+                    siblingsPos.x += GetGenerationSize(currentChild.data.Children.Split("_")) / 2;
+                }
+                else if (currentChild.data.Partner != "")
                 {
                     siblingsPos.x += 350;
                 }
@@ -129,29 +181,6 @@ public class CreateTree : MonoBehaviour
                     siblingsPos.x += 150;
                 }
             }
-
-            Vector2 tempPos = siblingsPos;
-            // Put the position
-            tempPos.y -= ((RectTransform)barSiblingsToCase.transform).sizeDelta.y / 2;
-            barSiblingsToCase.transform.position = tempPos;
-
-            // Génère sa case
-            tempPos.y -= ((RectTransform)barSiblingsToCase.transform).sizeDelta.y / 2;
-            GenerateCase(newChara, tempPos);
-
-            // Décale pour le prochains siblings
-            if (newChara.data.Children != null && newChara.data.Children.Length > 2)
-            {
-                siblingsPos.x += GetGenerationSize(newChara.data.Children.Split("_"))/2;
-            }
-            else if (newChara.data.Partner != null)
-            {
-                siblingsPos.x += 350;
-            }
-            else
-            {
-                siblingsPos.x += 150;
-            }
         }
     }
 
@@ -159,17 +188,21 @@ public class CreateTree : MonoBehaviour
     {
         int result = 0;
 
-        for (int i = 0; i < children.Length;i++)
+        for (int i = 0; i < children.Length; i++)
         {
             int tempResult = 300;
-            CharacterDB child = new CharacterDB();
-            RSaveClass<CharacterDB>.Load(child, false, children[i]);
 
-            if (child.data.Children != null && child.data.Children.Length > 2)
+            List<CharacterData> results = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{children[i]}';");
+            CharacterDB child = new CharacterDB
+            {
+                data = results[0]
+            };
+
+            if (child.data.Children != "" && child.data.Children.Split("_").Length > 2)
             {
                 tempResult = GetGenerationSize(child.data.Children.Split("_"));
             }
-            else if (child.data.Partner != null)
+            else if (child.data.Partner != "")
             {
                 tempResult = 700;
             }
@@ -177,7 +210,7 @@ public class CreateTree : MonoBehaviour
             if (i == children.Length - 1 || i == 0)
             {
                 result += 100;
-                result += tempResult/2;
+                result += tempResult / 2;
             }
             else
             {

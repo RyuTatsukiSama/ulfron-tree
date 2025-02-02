@@ -53,7 +53,9 @@ public class DBView : EditorWindow
         if (GUILayout.Button("Update DB", GUILayout.Width(300)))
         {
             foreach (CharacterData r in results)
+            {
                 connection.Query<CharacterData>($"INSERT OR REPLACE INTO character (id,CName,Partner,Children) VALUES ({r.id},'{r.CName}','{r.Partner}','{r.Children}')");
+            }
         }
 
         GUILayout.EndHorizontal();
