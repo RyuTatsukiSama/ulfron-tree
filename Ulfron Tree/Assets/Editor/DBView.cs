@@ -52,10 +52,22 @@ public class DBView : EditorWindow
 
         if (GUILayout.Button("Update DB", GUILayout.Width(300)))
         {
-            foreach (CharacterData r in results)
+            List<CharacterData> losresults = connection.Query<CharacterData>($"SELECT * FROM character");
+
+            for (int i = 0; i < results.Count; i++)
             {
-                connection.Query<CharacterData>($"INSERT OR REPLACE INTO character (id,CName,Partner,Children) VALUES ({r.id},'{r.CName}','{r.Partner}','{r.Children}')");
+                if (results[0] != losresults[0])
+                {
+                    connection.Query<CharacterData>($"INSERT OR REPLACE INTO character (id,CName,Partner,Children) VALUES ({results[0].id},'{results[0].CName}','{results[0].Partner}','{results[0].Children}')");
+
+                    if (results[0].Children != losresults[0].Children)
+                    {
+
+                    }
+                }
             }
+
+            results = connection.Query<CharacterData>("SELECT * FROM character");
         }
 
         GUILayout.EndHorizontal();
@@ -86,5 +98,10 @@ public class DBView : EditorWindow
         CharacterDB Mia = new CharacterDB("Mia", "Eto", null);
 
         results = connection.Query<CharacterData>("SELECT * FROM character");
+    }
+
+    public void UpdateChildren(CharacterData cd)
+    {
+
     }
 }
