@@ -11,6 +11,8 @@ public class DBView : EditorWindow
 
     static List<CharacterData> results;
 
+    Vector2 scrollPos = new Vector2(600, 0);
+
     [MenuItem("DataBase/View")]
     public static void ShowView()
     {
@@ -31,6 +33,8 @@ public class DBView : EditorWindow
 
         GUILayout.EndHorizontal();
 
+        scrollPos = GUILayout.BeginScrollView(scrollPos, false, true, GUILayout.Width(700));
+
         foreach (CharacterData r in results)
         {
             GUILayout.BeginHorizontal();
@@ -41,6 +45,8 @@ public class DBView : EditorWindow
 
             GUILayout.EndHorizontal();
         }
+
+        GUILayout.EndScrollView();
 
         GUILayout.BeginHorizontal();
 
@@ -56,14 +62,21 @@ public class DBView : EditorWindow
 
             for (int i = 0; i < results.Count; i++)
             {
-                if (results[0] != losresults[0])
+                if (!results[i].Equals(losresults[i]))
                 {
-                    connection.Query<CharacterData>($"INSERT OR REPLACE INTO character (id,CName,Partner,Children) VALUES ({results[0].id},'{results[0].CName}','{results[0].Partner}','{results[0].Children}')");
-
-                    if (results[0].Children != losresults[0].Children)
+                    if (results[i].Children != losresults[i].Children)
                     {
+                        List<CharacterData> partner = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{results[i].Partner}'");
+                        connection.Query<CharacterData>($"UPDATE character SET Children = '{results[i].Children}' WHERE id = {partner[0].id}");
 
+                        foreach (string child in results[i].Children.Split("_"))
+                        {
+                            if (connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{child}'").Count == 0)
+                                connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children) VALUES ('{child}','','')");
+                        }
                     }
+
+                    connection.Query<CharacterData>($"INSERT OR REPLACE INTO character (id,CName,Partner,Children) VALUES ({results[i].id},'{results[i].CName}','{results[i].Partner}','{results[i].Children}')");
                 }
             }
 
@@ -81,7 +94,7 @@ public class DBView : EditorWindow
     public void RefreshDataBase()
     {
         connection.Query<CharacterData>("DROP TABLE IF EXISTS character");
-        connection.Query<CharacterData>("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT, Partner TEXT, Children TEXT);");
+        connection.Query<CharacterData>("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT UNIQUE, Partner TEXT, Children TEXT);");
 
         string ZCChildren = "Haru_Hiro_Lila_Lily_Iris_Mia_Loan_Izuki_Milie_Kari_Isy_Esther_Sacha_Ugo_Liam_Amane_Kira_Élimina";
         CharacterDB Zekio = new CharacterDB("Zekio", "Claire", ZCChildren);
@@ -98,10 +111,5 @@ public class DBView : EditorWindow
         CharacterDB Mia = new CharacterDB("Mia", "Eto", null);
 
         results = connection.Query<CharacterData>("SELECT * FROM character");
-    }
-
-    public void UpdateChildren(CharacterData cd)
-    {
-
     }
 }
