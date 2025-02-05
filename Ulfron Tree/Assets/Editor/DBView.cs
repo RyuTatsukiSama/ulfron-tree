@@ -1,8 +1,6 @@
-using Codice.CM.Common;
 using SQLite4Unity3d;
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.MemoryProfiler;
 using UnityEngine;
 
 public class DBView : EditorWindow
@@ -58,37 +56,50 @@ public class DBView : EditorWindow
 
         if (GUILayout.Button("Update DB", GUILayout.Width(300)))
         {
-            List<CharacterData> losresults = connection.Query<CharacterData>($"SELECT * FROM character");
-
-            for (int i = 0; i < results.Count; i++)
-            {
-                if (!results[i].Equals(losresults[i]))
-                {
-                    if (results[i].Children != losresults[i].Children)
-                    {
-                        List<CharacterData> partner = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{results[i].Partner}'");
-                        connection.Query<CharacterData>($"UPDATE character SET Children = '{results[i].Children}' WHERE id = {partner[0].id}");
-
-                        foreach (string child in results[i].Children.Split("_"))
-                        {
-                            if (connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{child}'").Count == 0)
-                                connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children) VALUES ('{child}','','')");
-                        }
-                    }
-
-                    connection.Query<CharacterData>($"INSERT OR REPLACE INTO character (id,CName,Partner,Children) VALUES ({results[i].id},'{results[i].CName}','{results[i].Partner}','{results[i].Children}')");
-                }
-            }
-
-            results = connection.Query<CharacterData>("SELECT * FROM character");
+            UpdateDB();
         }
 
         GUILayout.EndHorizontal();
+        GUILayout.BeginHorizontal();
 
         if (GUILayout.Button("Refresh Database", GUILayout.Width(600)))
         {
             RefreshDataBase();
         }
+
+        GUILayout.EndHorizontal();
+    }
+
+    void UpdateDB()
+    {
+        List<CharacterData> losresults = connection.Query<CharacterData>($"SELECT * FROM character");
+
+        for (int i = 0; i < results.Count; i++)
+        {
+            if (!results[i].Equals(losresults[i]))
+            {
+                if (results[i].Children != losresults[i].Children)
+                {
+                    List<CharacterData> partner = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{results[i].Partner}'");
+                    connection.Query<CharacterData>($"UPDATE character SET Children = '{results[i].Children}' WHERE id = {partner[0].id}");
+
+                    foreach (string child in results[i].Children.Split("_"))
+                    {
+                        if (connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{child}'").Count == 0)
+                            connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children) VALUES ('{child}','','')");
+                    }
+                }
+
+                if (connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{results[0].Partner}'").Count == 0)
+                {
+                    connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children) VALUES ('{results[0].Partner}','{results[0].CName}','{results[0].Children}')");
+                }
+
+                connection.Query<CharacterData>($"INSERT OR REPLACE INTO character (id,CName,Partner,Children) VALUES ({results[i].id},'{results[i].CName}','{results[i].Partner}','{results[i].Children}')");
+            }
+        }
+
+        results = connection.Query<CharacterData>("SELECT * FROM character");
     }
 
     public void RefreshDataBase()
@@ -112,4 +123,5 @@ public class DBView : EditorWindow
 
         results = connection.Query<CharacterData>("SELECT * FROM character");
     }
+
 }
