@@ -1,5 +1,7 @@
 using SQLite4Unity3d;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,7 +18,7 @@ public class DBView : EditorWindow
     {
         GetWindow<DBView>("Ulfron Database");
         connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
-        connection.Query<CharacterData>("CREATE TABLE IF NOT EXISTS character(CName TEXT UNIQUE, Partner TEXT, Children TEXT);");
+        connection.Query<CharacterData>("CREATE TABLE IF NOT EXISTS character(CName TEXT UNIQUE, Partner TEXT, Children TEXT, Parent TEXT);");
 
         results = connection.Query<CharacterData>("SELECT * FROM character");
     }
@@ -25,13 +27,13 @@ public class DBView : EditorWindow
     {
         GUILayout.BeginHorizontal();
 
-        GUILayout.Label("Name", GUILayout.Width(200));
+        GUILayout.Label("CName", GUILayout.Width(200));
         GUILayout.Label("Partner", GUILayout.Width(200));
         GUILayout.Label("Children", GUILayout.Width(200));
 
         GUILayout.EndHorizontal();
 
-        scrollPos = GUILayout.BeginScrollView(scrollPos, false, true, GUILayout.Width(700));
+        scrollPos = GUILayout.BeginScrollView(scrollPos, false, true, GUILayout.Width(660));
 
         foreach (CharacterData r in results)
         {
@@ -41,6 +43,11 @@ public class DBView : EditorWindow
             r.Partner = GUILayout.TextField(r.Partner, GUILayout.Width(200));
             r.Children = GUILayout.TextArea(r.Children, GUILayout.Width(200));
 
+            if (GUILayout.Button("-", GUILayout.Width(30)))
+            {
+                DeleteFromDB();
+            }
+
             GUILayout.EndHorizontal();
         }
 
@@ -48,13 +55,7 @@ public class DBView : EditorWindow
 
         GUILayout.BeginHorizontal();
 
-        if (GUILayout.Button("Add", GUILayout.Width(300)))
-        {
-            connection.Query<CharacterData>("INSERT INTO character(CName,Partner,Children) VALUES ('','','')");
-            results = connection.Query<CharacterData>("SELECT * FROM character");
-        }
-
-        if (GUILayout.Button("Update DB", GUILayout.Width(300)))
+        if (GUILayout.Button("Update DB", GUILayout.Width(600)))
         {
             UpdateDB();
         }
@@ -62,7 +63,12 @@ public class DBView : EditorWindow
         GUILayout.EndHorizontal();
         GUILayout.BeginHorizontal();
 
-        if (GUILayout.Button("Refresh Database", GUILayout.Width(600)))
+        if (GUILayout.Button("Create Backup", GUILayout.Width(300)))
+        {
+            CreateBackup();
+        }
+
+        if (GUILayout.Button("Refresh Database", GUILayout.Width(300)))
         {
             RefreshDataBase();
         }
@@ -76,52 +82,118 @@ public class DBView : EditorWindow
 
         for (int i = 0; i < results.Count; i++)
         {
+
             if (!results[i].Equals(losresults[i]))
             {
+                if (results[i].CName != losresults[i].CName)
+                {
+                    UpdateDataByCNameField(ref losresults, i);
+                }
+
+                if (results[i].Partner != losresults[i].Partner)
+                {
+                    UpdateDataByPartnerField(losresults, i);
+                }
+
                 if (results[i].Children != losresults[i].Children)
                 {
-                    List<CharacterData> partner = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{results[i].Partner}'");
-                    connection.Query<CharacterData>($"UPDATE character SET Children = '{results[i].Children}' WHERE id = {partner[0].id}");
-
-                    foreach (string child in results[i].Children.Split("_"))
-                    {
-                        if (connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{child}'").Count == 0)
-                            connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children) VALUES ('{child}','','')");
-                    }
+                    UpdateDataByChildrenField(losresults, i);
                 }
 
-                if (connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{results[0].Partner}'").Count == 0)
-                {
-                    connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children) VALUES ('{results[0].Partner}','{results[0].CName}','{results[0].Children}')");
-                }
-
-                connection.Query<CharacterData>($"INSERT OR REPLACE INTO character (id,CName,Partner,Children) VALUES ({results[i].id},'{results[i].CName}','{results[i].Partner}','{results[i].Children}')");
+                connection.Query<CharacterData>($"INSERT OR REPLACE INTO character (id,CName,Partner,Children,Parent) VALUES ({results[i].id},'{results[i].CName}','{results[i].Partner}','{results[i].Children}','{results[i].Parent}')");
             }
         }
 
         results = connection.Query<CharacterData>("SELECT * FROM character");
     }
 
-    public void RefreshDataBase()
+    void UpdateDataByCNameField(ref List<CharacterData> losResults, int index)
+    {
+        if (results[index].Partner != "")
+        {
+            List<CharacterData> partnerData = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{losResults[index].Partner}' OR CName = '{results[index].Partner}'");
+            connection.Query<CharacterData>($"UPDATE character SET Partner = '{results[index].CName}' WHERE id = {partnerData[0].id}");
+            results[partnerData[0].id - 1].Partner = results[index].CName;
+            losResults[partnerData[0].id - 1].Partner = results[index].CName;
+        }
+
+        if (results[index].Parent != "")
+        {
+            string[] parents = results[index].Parent.Split("_");
+            string[] losParents = losResults[index].Parent.Split("_");
+
+
+            List<CharacterData> parent1Data = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{parents[0]}' OR CName = '{losParents[0]}'");
+            List<CharacterData> parent2Data = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{parents[1]}' OR CName = '{losParents[1]}'");
+        }
+    }
+
+    void UpdateDataByPartnerField(List<CharacterData> losResults, int index)
+    {
+        if (losResults[index].Partner == "")
+        {
+            connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children,Parent) VALUES ('{results[index].Partner}','{results[index].CName}','{results[index].Children}','')");
+        }
+        else
+        {
+            List<CharacterData> partnerData = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{losResults[index].Partner}'");
+            connection.Query<CharacterData>($"UPDATE character SET CName = '{results[index].Partner}' WHERE id = {partnerData[0].id}");
+        }
+    }
+
+    void UpdateDataByChildrenField(List<CharacterData> losResults, int index)
+    {
+        List<CharacterData> partner = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{results[index].Partner}'");
+        connection.Query<CharacterData>($"UPDATE character SET Children = '{results[index].Children}' WHERE id = {partner[0].id}");
+
+        string[] childrenResults = results[index].Children.Split("_");
+        string[] childrenLosResults = losResults[index].Children.Split("_");
+
+        for (int j = 0; j < childrenResults.Length; j++)
+        {
+            if (childrenResults.Length == childrenLosResults.Length && childrenResults[j] != childrenLosResults[j]) // Update a child who already exist
+            {
+                List<CharacterData> childrenData = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{childrenLosResults[j]}'");
+                connection.Query<CharacterData>($"UPDATE character SET CName = '{childrenResults[j]}' WHERE id = {childrenData[0].id}");
+            }
+            else if (connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{childrenResults[j]}'").Count == 0) // Create a new child
+            {
+                connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children,Parent) VALUES ('{childrenResults[j]}','','','')");
+            }
+        }
+    }
+
+    void DeleteFromDB()
+    {
+
+    }
+
+    void CreateBackup()
+    {
+        if (File.Exists(Application.dataPath + "/StreamingAssets/ulfronBackup.db"))
+        {
+            File.Delete(Application.dataPath + "/StreamingAssets/ulfronBackup.db");
+        }
+
+        File.Copy(Application.dataPath + "/StreamingAssets/ulfron.db", Application.dataPath + "/StreamingAssets/ulfronBackup.db");
+    }
+
+    void RefreshDataBase()
     {
         connection.Query<CharacterData>("DROP TABLE IF EXISTS character");
-        connection.Query<CharacterData>("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT UNIQUE, Partner TEXT, Children TEXT);");
+        connection.Query<CharacterData>("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT UNIQUE, Partner TEXT, Children TEXT, Parent TEXT);");
 
-        string ZCChildren = "Haru_Hiro_Lila_Lily_Iris_Mia_Loan_Izuki_Milie_Kari_Isy_Esther_Sacha_Ugo_Liam_Amane_Kira_Élimina";
-        CharacterDB Zekio = new CharacterDB("Zekio", "Claire", ZCChildren);
+        SQLiteConnection backupConnection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfronBackup.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
 
-        string HEhildren = "Lim_Emma_Yuko_Torch";
-        CharacterDB Haru = new CharacterDB("Haru", "Élia", HEhildren);
+        List<CharacterData> backupData = backupConnection.Query<CharacterData>("SELECT * FROM character");
 
-        string HCChildren = "Adam_Burn";
-        CharacterDB Hiro = new CharacterDB("Hiro", "Clara", HCChildren);
-
-        string INChildren = "Hélio";
-        CharacterDB Iris = new CharacterDB("Iris", "Nétior", INChildren);
-
-        CharacterDB Mia = new CharacterDB("Mia", "Eto", null);
+        foreach (CharacterData backupDataItem in backupData)
+        {
+            connection.Query<CharacterData>($"INSERT INTO character (id, CName,Partner,Children, Parent) VALUES ({backupDataItem.id}, '{backupDataItem.CName}','{backupDataItem.Partner}','{backupDataItem.Children},'{backupDataItem.Parent}')");
+        }
 
         results = connection.Query<CharacterData>("SELECT * FROM character");
+
     }
 
 }

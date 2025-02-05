@@ -10,11 +10,14 @@ public class CharacterData : IEquatable<CharacterData>
     public string Partner { get; set; }
     public string Children { get; set; }
 
+    public string Parent { get; set; }
+
     public bool Equals(CharacterData other)
     {
         return id == other.id &&
             CName == other.CName &&
             Partner == other.Partner &&
-            Children == other.Children;
+            Children == other.Children && 
+            Parent == other.Parent;
     }
 }
