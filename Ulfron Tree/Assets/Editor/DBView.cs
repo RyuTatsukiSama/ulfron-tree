@@ -5,6 +5,12 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
+// ---- Warning ----
+// In this code you have 2 #region Dead Code
+// This code is currently dead because it make
+// the work more complicated and those function are not that useful
+// But i keep it in case i would want to finish them
+
 public class DBView : EditorWindow
 {
     public static SQLiteConnection connection;
@@ -43,6 +49,11 @@ public class DBView : EditorWindow
             r.Partner = GUILayout.TextField(r.Partner, GUILayout.Width(200));
             r.Children = GUILayout.TextArea(r.Children, GUILayout.Width(200));
 
+            if (GUILayout.Button("-", GUILayout.Width(30)))
+            {
+                DeleteFromDB();
+            }
+
             GUILayout.EndHorizontal();
         }
 
@@ -80,21 +91,22 @@ public class DBView : EditorWindow
 
             if (!results[i].Equals(losresults[i]))
             {
-                if (results[i].CName != losresults[i].CName)
-                {
-                    UpdateDataByCNameField(ref losresults, i);
-                }
+                #region DeadCode 
+                //if (results[i].CName != losresults[i].CName)
+                //{
+                //    UpdateDataByCNameField(ref losresults, i);
+                //}
 
-                if (results[i].Partner != losresults[i].Partner)
-                {
-                    UpdateDataByPartnerField(losresults, i);
-                }
+                //if (results[i].Partner != losresults[i].Partner)
+                //{
+                //    UpdateDataByPartnerField(losresults, i);
+                //}
 
-                if (results[i].Children != losresults[i].Children)
-                {
-                    UpdateDataByChildrenField(losresults, i);
-                }
-
+                //if (results[i].Children != losresults[i].Children)
+                //{
+                //    UpdateDataByChildrenField(losresults, i);
+                //}
+                #endregion
                 connection.Query<CharacterData>($"INSERT OR REPLACE INTO character (id,CName,Partner,Children,Parent) VALUES ({results[i].id},'{results[i].CName}','{results[i].Partner}','{results[i].Children}','{results[i].Parent}')");
             }
         }
@@ -102,6 +114,7 @@ public class DBView : EditorWindow
         results = connection.Query<CharacterData>("SELECT * FROM character");
     }
 
+    #region Dead Code
     void UpdateDataByCNameField(ref List<CharacterData> losResults, int index)
     {
         if (results[index].Partner != "")
@@ -120,6 +133,16 @@ public class DBView : EditorWindow
 
             List<CharacterData> parent1Data = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{parents[0]}' OR CName = '{losParents[0]}'");
             List<CharacterData> parent2Data = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{parents[1]}' OR CName = '{losParents[1]}'");
+            
+            string newChildren = string.Empty;
+            foreach (string child in parent1Data[0].Children.Split("_"))
+            {
+                if (child != results[index].CName )
+                {
+
+                }
+            }
+
         }
     }
 
@@ -157,6 +180,7 @@ public class DBView : EditorWindow
             }
         }
     }
+    #endregion
 
     void DeleteFromDB()
     {
@@ -184,7 +208,7 @@ public class DBView : EditorWindow
 
         foreach (CharacterData backupDataItem in backupData)
         {
-            connection.Query<CharacterData>($"INSERT INTO character (id, CName,Partner,Children, Parent) VALUES ({backupDataItem.id}, '{backupDataItem.CName}','{backupDataItem.Partner}','{backupDataItem.Children},'{backupDataItem.Parent}')");
+            connection.Query<CharacterData>($"INSERT INTO character (id, CName,Partner,Children, Parent) VALUES ({backupDataItem.id}, '{backupDataItem.CName}','{backupDataItem.Partner}','{backupDataItem.Children}','{backupDataItem.Parent}')");
         }
 
         results = connection.Query<CharacterData>("SELECT * FROM character");
