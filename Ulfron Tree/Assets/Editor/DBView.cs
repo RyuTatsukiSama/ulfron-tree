@@ -51,7 +51,7 @@ public class DBView : EditorWindow
 
             if (GUILayout.Button("-", GUILayout.Width(30)))
             {
-                DeleteFromDB();
+                DeleteFromDB(r);
             }
 
             GUILayout.EndHorizontal();
@@ -182,9 +182,9 @@ public class DBView : EditorWindow
     }
     #endregion
 
-    void DeleteFromDB()
+    void DeleteFromDB(CharacterData character)
     {
-
+        results = connection.Query<CharacterData>($"DELETE FROM Character WHERE id={character.id}");
     }
 
     void CreateBackup()
