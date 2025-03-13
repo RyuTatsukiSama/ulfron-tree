@@ -43,11 +43,6 @@ public class DBView : EditorWindow
             r.Partner = GUILayout.TextField(r.Partner, GUILayout.Width(200));
             r.Children = GUILayout.TextArea(r.Children, GUILayout.Width(200));
 
-            if (GUILayout.Button("-", GUILayout.Width(30)))
-            {
-                DeleteFromDB();
-            }
-
             GUILayout.EndHorizontal();
         }
 
