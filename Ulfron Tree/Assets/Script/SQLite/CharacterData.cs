@@ -9,7 +9,6 @@ public class CharacterData : IEquatable<CharacterData>
     public string CName { get; set; }
     public string Partner { get; set; }
     public string Children { get; set; }
-
     public string Parent { get; set; }
 
     public bool Equals(CharacterData other)
@@ -19,5 +18,10 @@ public class CharacterData : IEquatable<CharacterData>
             Partner == other.Partner &&
             Children == other.Children && 
             Parent == other.Parent;
+    }
+
+    public override string ToString()
+    {
+        return $"ID : {id}\nName : {CName}\nPartner : {Partner}\nChildren : {Children}\nParent : {Parent}";
     }
 }
