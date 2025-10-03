@@ -23,7 +23,7 @@ public class CreateTree : MonoBehaviour
     {
         Vector2 pos = new Vector2(960, 540);
 
-        List<CharacterData> results = connection.Query<CharacterData>("SELECT * FROM character WHERE CName='Zekio';");
+        List<CharacterDataNew> results = connection.Query<CharacterDataNew>("SELECT * FROM character WHERE CName='Zekio';");
         CharacterDB zekio = new CharacterDB
         {
             data = results[0]
@@ -32,15 +32,10 @@ public class CreateTree : MonoBehaviour
         GenerateCase(zekio, pos);
     }
 
-    // Update is called once per frame
-    void Update()
+    void GenerateCase(CharacterDB currentChara, Vector2 pos)
     {
-
-    }
-
-    void GenerateCase(CharacterDB newChara, Vector2 pos)
-    {
-        if (newChara.data.Partner != "")
+        CharacterDataNew partnerChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_husband FROM engaged WHERE id_wife={currentChara.data.id} UNION SELECT id_wife FROM engaged WHERE id_husband={currentChara.data.id});").FirstOrDefault();
+        if (partnerChara != null)
         {
             GameObject newBar = Instantiate(prefabBarHorizontal);
             newBar.transform.SetParent(transform, false);
@@ -49,22 +44,23 @@ public class CreateTree : MonoBehaviour
 
         GameObject newCase = Instantiate(prefabCase);
         newCase.transform.SetParent(transform);
-        newCase.transform.name = newChara.data.CName;
+        newCase.transform.name = currentChara.data.CName;
 
         foreach (TextMeshProUGUI text in newCase.GetComponentsInChildren<TextMeshProUGUI>())
         {
-            text.text = newChara.data.CName;
+            text.text = currentChara.data.CName;
         }
 
-        if (newChara.data.Partner != "")
+        if (partnerChara != null)
         {
-            GeneratePartner(newChara.data.Partner, pos);
+            GeneratePartner(partnerChara, pos);
             Vector2 foo = pos;
             foo.x -= 200;
             newCase.transform.position = foo;
-            if (newChara.data.Children != "")
+            List<CharacterDataNew> children = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_child FROM kinship WHERE id_parent='{currentChara.data.id}');");
+            if (children.Count > 0)
             {
-                GenerateChildren(newChara.data.Children.Split("_"), pos);
+                GenerateChildren(children, pos);
             }
         }
         else
@@ -73,28 +69,22 @@ public class CreateTree : MonoBehaviour
         }
     }
 
-    void GeneratePartner(string name, Vector2 pos)
+    void GeneratePartner(CharacterDataNew partner, Vector2 pos)
     {
-        List<CharacterData> results = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{name}';");
-        CharacterDB partner = new CharacterDB
-        {
-            data = results[0]
-        };
-
         GameObject newCase = Instantiate(prefabCase);
         newCase.transform.SetParent(transform);
-        newCase.transform.name = partner.data.CName;
+        newCase.transform.name = partner.CName;
 
         foreach (TextMeshProUGUI text in newCase.GetComponentsInChildren<TextMeshProUGUI>())
         {
-            text.text = partner.data.CName;
+            text.text = partner.CName;
         }
 
         pos.x += 200;
         newCase.transform.position = pos;
     }
 
-    void GenerateChildren(string[] childrenNames, Vector2 pos)
+    void GenerateChildren(List<CharacterDataNew> children, Vector2 pos)
     {
         // Générer la barre reliant lien parent à liens frère et soeur
         GameObject barParentsToSiblings = Instantiate(prefabBarVertical);
@@ -104,12 +94,11 @@ public class CreateTree : MonoBehaviour
         barParentsToSiblings.transform.position = barPos;
 
         // Génère les enfants
-        if (childrenNames.Length == 1) // Si il n'y a qu'un enfant
+        if (children.Count == 1) // Si il n'y a qu'un enfant
         {
-            List<CharacterData> results = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{childrenNames[0]}';");
             CharacterDB currentChild = new CharacterDB
             {
-                data = results[0]
+                data = children[0]
             };
             barPos = pos;
             barPos.y -= ((RectTransform)barParentsToSiblings.transform).sizeDelta.y;
@@ -119,21 +108,20 @@ public class CreateTree : MonoBehaviour
         {
             // Générer la barre reliant les frères et soeurs
             GameObject barSiblings = Instantiate(prefabBarHorizontal);
-            ((RectTransform)barSiblings.transform).sizeDelta = new Vector2(GetGenerationSize(childrenNames) - 200, 10); // Ici à la place du strings.Length appeler le GetSizeGeneration
+            ((RectTransform)barSiblings.transform).sizeDelta = new Vector2(GetGenerationSize(children) - 200, 10); // Ici à la place du strings.Length appeler le GetSizeGeneration
             barSiblings.transform.SetParent(transform, false);
             barPos = pos;
             barPos.y -= ((RectTransform)barParentsToSiblings.transform).sizeDelta.y;
             barSiblings.transform.position = barPos;
 
-            Vector2 siblingsPos = barSiblings.transform.position; // Poisition d'un enfant sur la barre frères et soeurs
+            Vector2 siblingsPos = barSiblings.transform.position; // Position d'un enfant sur la barre frères et soeurs
             siblingsPos.y += ((RectTransform)barSiblings.transform).sizeDelta.y / 2;
             siblingsPos.x -= ((RectTransform)barSiblings.transform).sizeDelta.x / 2;
-            for (int i = 0; i < childrenNames.Length; i++)
+            for (int i = 0; i < children.Count; i++)
             {
-                List<CharacterData> results = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{childrenNames[i]}';");
                 CharacterDB currentChild = new CharacterDB
                 {
-                    data = results[0]
+                    data = children[i]
                 };
 
                 // Génère sa barre qui le relie à la barre frères et soeurs
@@ -141,14 +129,18 @@ public class CreateTree : MonoBehaviour
                 ((RectTransform)barSiblingsToCase.transform).sizeDelta = new Vector2(10, 200); ;
                 barSiblingsToCase.transform.SetParent(transform, false);
 
+                List<CharacterDataNew> granchildren = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_child FROM kinship WHERE id_parent='{children[i].id}');");
+                CharacterDataNew partnerChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_husband FROM engaged WHERE id_wife={children[i].id} UNION SELECT id_wife FROM engaged WHERE id_husband={children[i].id});").FirstOrDefault();
+
+
                 // Décalage du précédent siblings si il n'est pas le premier de la liste
                 if (i != 0)
                 {
-                    if (currentChild.data.Children != "" && currentChild.data.Children.Split("_").Length > 2)
+                    if (granchildren.Count > 2)
                     {
-                        siblingsPos.x += GetGenerationSize(currentChild.data.Children.Split("_")) / 2;
+                        siblingsPos.x += GetGenerationSize(granchildren) / 2;
                     }
-                    else if (currentChild.data.Partner != "")
+                    else if (partnerChara != null)
                     {
                         siblingsPos.x += 350;
                     }
@@ -168,11 +160,11 @@ public class CreateTree : MonoBehaviour
                 GenerateCase(currentChild, tempPos);
 
                 // Décale pour le prochains siblings
-                if (currentChild.data.Children != "" && currentChild.data.Children.Split("_").Length > 2)
+                if (granchildren.Count > 2)
                 {
-                    siblingsPos.x += GetGenerationSize(currentChild.data.Children.Split("_")) / 2;
+                    siblingsPos.x += GetGenerationSize(granchildren) / 2;
                 }
-                else if (currentChild.data.Partner != "")
+                else if (partnerChara != null)
                 {
                     siblingsPos.x += 350;
                 }
@@ -184,30 +176,27 @@ public class CreateTree : MonoBehaviour
         }
     }
 
-    int GetGenerationSize(string[] children)
+    int GetGenerationSize(List<CharacterDataNew> children)
     {
         int result = 0;
 
-        for (int i = 0; i < children.Length; i++)
+        for (int i = 0; i < children.Count; i++)
         {
             int tempResult = 300;
 
-            List<CharacterData> results = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{children[i]}';");
-            CharacterDB child = new CharacterDB
-            {
-                data = results[0]
-            };
+            List<CharacterDataNew> granchildren = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_child FROM kinship WHERE id_parent='{children[i].id}');");
+            CharacterDataNew partnerChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_husband FROM engaged WHERE id_wife={children[i].id} UNION SELECT id_wife FROM engaged WHERE id_husband={children[i].id});").FirstOrDefault();
 
-            if (child.data.Children != "" && child.data.Children.Split("_").Length > 2)
+            if (granchildren.Count > 2)
             {
-                tempResult = GetGenerationSize(child.data.Children.Split("_"));
+                tempResult = GetGenerationSize(granchildren);
             }
-            else if (child.data.Partner != "")
+            else if (partnerChara != null)
             {
                 tempResult = 700;
             }
 
-            if (i == children.Length - 1 || i == 0)
+            if (i == children.Count - 1 || i == 0)
             {
                 result += 100;
                 result += tempResult / 2;

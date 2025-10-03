@@ -5,7 +5,7 @@ using System.Linq;
 
 public class CharacterDB
 {
-    public CharacterData data;
+    public CharacterDataNew data;
 
     public static SQLiteConnection connection;
 
