@@ -1,6 +1,7 @@
 using UnityEngine;
 using SQLite4Unity3d;
 using System.Collections.Generic;
+using System.Linq;
 
 public class CharacterDB
 {
@@ -17,37 +18,29 @@ public class CharacterDB
     {
         connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
 
-        data = new CharacterData();
-        data.CName = _name;
-        data.Partner = _partner;
-        data.Children = _children;
+        connection.Execute($"INSERT OR IGNORE INTO character (cName) VALUES ('{_name}');");
+        CharacterDataNew currentChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE cName = '{_name}';").First();
 
-        List<CharacterData> results = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{data.CName}'");
-        if (results.Count > 0) // Itself
+        CharacterDataNew partnerChara = null;
+        if (_partner != null && _partner != "") // Partner
         {
-            connection.Query<CharacterData>($"INSERT OR REPLACE INTO character (id,CName,Partner,Children,Parent) VALUES ({results[0].id},'{data.CName}','{data.Partner}','{data.Children}','{results[0].Parent}')");
-        }
-        else
-        {
-            connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children,Parent) VALUES ('{data.CName}','{data.Partner}','{data.Children}','')");
+            connection.Execute($"INSERT OR IGNORE INTO character (cName) VALUES ('{_partner}');");
+            partnerChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE cName = '{_partner}';").First();
+            connection.Execute($"INSERT OR IGNORE INTO engaged (id_wife,id_husband) VALUES ('{partnerChara.id}','{currentChara.id}');");
         }
 
-        results = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{data.Partner}'");
-        if (results.Count == 0) // Partner
+        if (_children != null) // Children
         {
-            connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children,Parent) VALUES ('{data.Partner}','{data.CName}','{data.Children}','')");
-        }
-
-        if (data.Children != null) // Children
-        {
-            foreach (string child in data.Children.Split("_"))
+            foreach (string child in _children.Split("_"))
             {
-                results = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName='{child}'");
-                if (results.Count == 0)
-                {
-                    connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children,Parent) VALUES ('{child}','','','{data.CName}_{data.Partner}')");
-                }
+                connection.Execute($"INSERT OR IGNORE INTO character (cName) VALUES ('{child}');");
+                CharacterDataNew childChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE cName = '{child}';").First();
+                connection.Execute($"INSERT OR IGNORE INTO kinship (id_parent,id_child) VALUES ('{currentChara.id}','{childChara.id}');");
+                if (partnerChara != null)
+                    connection.Execute($"INSERT OR IGNORE INTO kinship (id_parent,id_child) VALUES ('{partnerChara.id}','{childChara.id}');");
             }
         }
+
+        connection.Close();
     }
 }
