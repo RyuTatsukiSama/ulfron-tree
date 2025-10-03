@@ -13,180 +13,95 @@ using UnityEngine;
 
 public class DBView : EditorWindow
 {
+    #region --- Shared Members ---
+
     public static SQLiteConnection connection;
 
-    static List<CharacterData> results;
+    int currentTabId = 0;
+    string[] tabName = { "Character", "Engaged", "Kinship" };
 
-    Vector2 scrollPos = new Vector2(600, 0);
+    #endregion
 
-    [MenuItem("DataBase/View")]
+    #region --- Character Table Members ---
+
+    static List<CharacterDataNew> resultsCharacter;
+
+    Vector2 scrollPosCharacter = new Vector2(600, 0);
+
+    #endregion
+
+    #region --- Engaged Table Members ---
+
+    static List<EngagedData> resultsPartner;
+
+    #endregion
+
+    #region --- Kinship Table Members ---
+
+    static List<KinshipData> resultsKinship;
+
+    #endregion
+
+    [MenuItem("DataBase/DB View")]
     public static void ShowView()
     {
-        GetWindow<DBView>("Ulfron Database");
+        GetWindow<DBView>("DB View");
         connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
-        connection.Query<CharacterData>("CREATE TABLE IF NOT EXISTS character(CName TEXT UNIQUE, Partner TEXT, Children TEXT, Parent TEXT);");
+        connection.Execute("CREATE TABLE IF NOT EXISTS engaged(id_wife INTEGER NOT NULL, id_husband INTEGER NOT NULL, PRIMARY KEY (id_wife,id_husband), CONSTRAINT fk_idwife FOREIGN KEY (id_wife) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idhusband FOREIGN KEY (id_husband) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+        connection.Execute("CREATE TABLE IF NOT EXISTS kinship(id_parent INTEGER NOT NULL, id_child INTEGER NOT NULL, PRIMARY KEY (id_parent,id_child), CONSTRAINT fk_idparent FOREIGN KEY (id_parent) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
 
-        results = connection.Query<CharacterData>("SELECT * FROM character");
+        resultsCharacter = connection.Query<CharacterDataNew>("SELECT * FROM character");
+        resultsPartner = connection.Query<EngagedData>("SELECT * FROM engaged");
+        resultsKinship = connection.Query<KinshipData>("SELECT * FROM kinship");
     }
 
     private void OnGUI()
     {
-        GUILayout.BeginHorizontal();
+        currentTabId = GUILayout.Toolbar(currentTabId, tabName);
 
-        GUILayout.Label("CName", GUILayout.Width(200));
-        GUILayout.Label("Partner", GUILayout.Width(200));
-        GUILayout.Label("Children", GUILayout.Width(200));
-
-        GUILayout.EndHorizontal();
-
-        scrollPos = GUILayout.BeginScrollView(scrollPos, false, true, GUILayout.Width(660));
-
-        foreach (CharacterData r in results)
+        switch (currentTabId)
         {
-            GUILayout.BeginHorizontal();
-
-            r.CName = GUILayout.TextField(r.CName, GUILayout.Width(200));
-            r.Partner = GUILayout.TextField(r.Partner, GUILayout.Width(200));
-            r.Children = GUILayout.TextArea(r.Children, GUILayout.Width(200));
-
-            if (GUILayout.Button("-", GUILayout.Width(30)))
-            {
-                // DeleteFromDB(r);
-            }
-
-            GUILayout.EndHorizontal();
+            case 0:
+                DrawCharacterTable();
+                break;
+            case 1:
+                DrawEngagedTable();
+                break;
+            case 2:
+                DrawKinshipTable();
+                break;
         }
 
-        GUILayout.EndScrollView();
+        GUILayout.FlexibleSpace();
+        GUILayout.BeginHorizontal(EditorStyles.toolbar);
 
-        GUILayout.BeginHorizontal();
-
-        if (GUILayout.Button("Update DB", GUILayout.Width(600)))
+        if (GUILayout.Button("Save DB", GUILayout.Height(25)))
         {
             UpdateDB();
         }
 
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-
-        if (GUILayout.Button("Create Backup", GUILayout.Width(300)))
+        if (GUILayout.Button("Create Backup", GUILayout.Height(25)))
         {
             CreateBackup();
         }
 
-        if (GUILayout.Button("Restore Backup", GUILayout.Width(300)))
+        if (GUILayout.Button("Restore Backup", GUILayout.Height(25)))
         {
-            RefreshDataBase();
+            RestoreBackup();
         }
 
         GUILayout.EndHorizontal();
+
     }
+
+    #region --- Utility Methods ---
 
     void UpdateDB()
     {
-        List<CharacterData> losresults = connection.Query<CharacterData>($"SELECT * FROM character");
+        
 
-        for (int i = 0; i < results.Count; i++)
-        {
-
-            if (!results[i].Equals(losresults[i]))
-            {
-                #region DeadCode 
-                //if (results[i].CName != losresults[i].CName)
-                //{
-                //    UpdateDataByCNameField(ref losresults, i);
-                //}
-
-                //if (results[i].Partner != losresults[i].Partner)
-                //{
-                //    UpdateDataByPartnerField(losresults, i);
-                //}
-
-                //if (results[i].Children != losresults[i].Children)
-                //{
-                //    UpdateDataByChildrenField(losresults, i);
-                //}
-                #endregion
-                connection.Query<CharacterData>($"INSERT OR REPLACE INTO character (id,CName,Partner,Children,Parent) VALUES ({results[i].id},'{results[i].CName}','{results[i].Partner}','{results[i].Children}','{results[i].Parent}')");
-            }
-        }
-
-        results = connection.Query<CharacterData>("SELECT * FROM character");
-    }
-
-    #region Dead Code
-    void UpdateDataByCNameField(ref List<CharacterData> losResults, int index)
-    {
-        if (results[index].Partner != "")
-        {
-            List<CharacterData> partnerData = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{losResults[index].Partner}' OR CName = '{results[index].Partner}'");
-            connection.Query<CharacterData>($"UPDATE character SET Partner = '{results[index].CName}' WHERE id = {partnerData[0].id}");
-            results[partnerData[0].id - 1].Partner = results[index].CName;
-            losResults[partnerData[0].id - 1].Partner = results[index].CName;
-        }
-
-        if (results[index].Parent != "")
-        {
-            string[] parents = results[index].Parent.Split("_");
-            string[] losParents = losResults[index].Parent.Split("_");
-
-
-            List<CharacterData> parent1Data = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{parents[0]}' OR CName = '{losParents[0]}'");
-            List<CharacterData> parent2Data = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{parents[1]}' OR CName = '{losParents[1]}'");
-            
-            string newChildren = string.Empty;
-            foreach (string child in parent1Data[0].Children.Split("_"))
-            {
-                if (child != results[index].CName )
-                {
-
-                }
-            }
-
-        }
-    }
-
-    void UpdateDataByPartnerField(List<CharacterData> losResults, int index)
-    {
-        if (losResults[index].Partner == "")
-        {
-            connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children,Parent) VALUES ('{results[index].Partner}','{results[index].CName}','{results[index].Children}','')");
-        }
-        else
-        {
-            List<CharacterData> partnerData = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{losResults[index].Partner}'");
-            connection.Query<CharacterData>($"UPDATE character SET CName = '{results[index].Partner}' WHERE id = {partnerData[0].id}");
-        }
-    }
-
-    void UpdateDataByChildrenField(List<CharacterData> losResults, int index)
-    {
-        List<CharacterData> partner = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{results[index].Partner}'");
-        connection.Query<CharacterData>($"UPDATE character SET Children = '{results[index].Children}' WHERE id = {partner[0].id}");
-
-        string[] childrenResults = results[index].Children.Split("_");
-        string[] childrenLosResults = losResults[index].Children.Split("_");
-
-        for (int j = 0; j < childrenResults.Length; j++)
-        {
-            if (childrenResults.Length == childrenLosResults.Length && childrenResults[j] != childrenLosResults[j]) // Update a child who already exist
-            {
-                List<CharacterData> childrenData = connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{childrenLosResults[j]}'");
-                connection.Query<CharacterData>($"UPDATE character SET CName = '{childrenResults[j]}' WHERE id = {childrenData[0].id}");
-            }
-            else if (connection.Query<CharacterData>($"SELECT * FROM character WHERE CName = '{childrenResults[j]}'").Count == 0) // Create a new child
-            {
-                connection.Query<CharacterData>($"INSERT INTO character (CName,Partner,Children,Parent) VALUES ('{childrenResults[j]}','','','')");
-            }
-        }
-    }
-    #endregion
-
-    void DeleteFromDB(CharacterData character)
-    {
-        results = connection.Query<CharacterData>($"DELETE FROM Character WHERE id={character.id}");
-
-        UpdateDB();
+        connection.Close();
+        connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
     }
 
     void CreateBackup()
@@ -199,22 +114,117 @@ public class DBView : EditorWindow
         File.Copy(Application.dataPath + "/StreamingAssets/ulfron.db", Application.dataPath + "/StreamingAssets/ulfronBackup.db");
     }
 
-    void RefreshDataBase()
+    void RestoreBackup()
     {
-        connection.Query<CharacterData>("DROP TABLE IF EXISTS character");
-        connection.Query<CharacterData>("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT UNIQUE, Partner TEXT, Children TEXT, Parent TEXT);");
+        // Destroy the data base
+        connection.Execute("DROP TABLE IF EXISTS character");
+        connection.Execute("DROP TABLE IF EXISTS engaged");
+        connection.Execute("DROP TABLE IF EXISTS kinship");
+
+        // Recreate the data base
+        connection.Execute("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT UNIQUE);");
+        connection.Execute("CREATE TABLE IF NOT EXISTS engaged(id_wife INTEGER NOT NULL, id_husband INTEGER NOT NULL, PRIMARY KEY (id_wife,id_husband), CONSTRAINT fk_idwife FOREIGN KEY (id_wife) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idhusband FOREIGN KEY (id_husband) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+        connection.Execute("CREATE TABLE IF NOT EXISTS kinship(id_parent INTEGER NOT NULL, id_child INTEGER NOT NULL, PRIMARY KEY (id_parent,id_child), CONSTRAINT fk_idparent FOREIGN KEY (id_parent) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
 
         SQLiteConnection backupConnection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfronBackup.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
 
-        List<CharacterData> backupData = backupConnection.Query<CharacterData>("SELECT * FROM character");
+        #region --- Character Table Restore ---
+        List<CharacterDataNew> backupDataCharacter = backupConnection.Query<CharacterDataNew>("SELECT * FROM character");
 
-        foreach (CharacterData backupDataItem in backupData)
+        foreach (CharacterDataNew character in backupDataCharacter)
         {
-            connection.Query<CharacterData>($"INSERT INTO character (id, CName,Partner,Children, Parent) VALUES ({backupDataItem.id}, '{backupDataItem.CName}','{backupDataItem.Partner}','{backupDataItem.Children}','{backupDataItem.Parent}')");
+            connection.Execute($"INSERT INTO character (id, cName) VALUES ({character.id}, '{character.CName}');");
         }
 
-        results = connection.Query<CharacterData>("SELECT * FROM character");
+        resultsCharacter = connection.Query<CharacterDataNew>("SELECT * FROM character");
 
+        #endregion
+
+        #region --- Kinship Table Restore ---
+
+        List<EngagedData> backupPartner = connection.Query<EngagedData>("SELECT * FROM partner");
+
+        foreach (EngagedData character in backupPartner)
+        {
+            connection.Execute($"INSERT INTO engaged (id_wife, id_husband) VALUES ({character.id_wife}, '{character.id_husband}');");
+        }
+
+        resultsPartner = connection.Query<EngagedData>("SELECT * FROM partner");
+
+        #endregion
+
+        #region --- Engaged Table Restore ---
+
+        List<KinshipData> backupKinship = connection.Query<KinshipData>("SELECT * FROM kinship");
+
+        foreach (KinshipData character in backupKinship)
+        {
+            connection.Execute($"INSERT INTO kinship (id_parent, id_child) VALUES ({character.id_parent}, '{character.id_child}');");
+        }
+
+        resultsKinship = connection.Query<KinshipData>("SELECT * FROM kinship");
+
+        #endregion
     }
 
+    #endregion
+
+    #region --- Character Table Methods ---
+    void DrawCharacterTable()
+    {
+        GUILayout.Label("Character Table", EditorStyles.boldLabel);
+
+        GUILayout.BeginHorizontal();
+
+        GUILayout.Label("cName", GUILayout.Width(200));
+        GUILayout.Label("Partner", GUILayout.Width(200));
+        GUILayout.Label("Children", GUILayout.Width(200));
+
+        GUILayout.EndHorizontal();
+
+        scrollPosCharacter = GUILayout.BeginScrollView(scrollPosCharacter, false, true, GUILayout.Width(660));
+
+        foreach (CharacterDataNew r in resultsCharacter)
+        {
+            GUILayout.BeginHorizontal();
+
+            r.CName = GUILayout.TextField(r.CName, GUILayout.Width(200));
+
+            if (GUILayout.Button("-", GUILayout.Width(30)))
+            {
+                DeleteCharacter(r);
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        GUILayout.EndScrollView();
+    }
+
+    void DeleteCharacter(CharacterDataNew character)
+    {
+        connection.Execute($"DELETE FROM Character WHERE id={character.id}");
+
+        UpdateDB();
+    }
+
+    #endregion
+
+    #region --- Engaged Table Methods ---
+
+    void DrawEngagedTable()
+    {
+        GUILayout.Label("Engaged Table", EditorStyles.boldLabel);
+    }
+
+    #endregion
+
+    #region --- Kinship Table Methods ---
+
+    void DrawKinshipTable()
+    {
+        GUILayout.Label("Kinship Table", EditorStyles.boldLabel);
+    }
+
+    #endregion
 }
