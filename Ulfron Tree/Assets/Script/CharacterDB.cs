@@ -26,7 +26,7 @@ public class CharacterDB
         {
             connection.Execute($"INSERT OR IGNORE INTO character (cName) VALUES ('{_partner}');");
             partnerChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE cName = '{_partner}';").First();
-            connection.Execute($"INSERT OR IGNORE INTO engaged (id_wife,id_husband) VALUES ('{partnerChara.id}','{currentChara.id}');");
+            connection.Execute($"INSERT OR IGNORE INTO engaged (id_spouse1,id_spouse2) VALUES ('{partnerChara.id}','{currentChara.id}');");
         }
 
         if (_children != null) // Children
@@ -35,9 +35,7 @@ public class CharacterDB
             {
                 connection.Execute($"INSERT OR IGNORE INTO character (cName) VALUES ('{child}');");
                 CharacterDataNew childChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE cName = '{child}';").First();
-                connection.Execute($"INSERT OR IGNORE INTO kinship (id_parent,id_child) VALUES ('{currentChara.id}','{childChara.id}');");
-                if (partnerChara != null)
-                    connection.Execute($"INSERT OR IGNORE INTO kinship (id_parent,id_child) VALUES ('{partnerChara.id}','{childChara.id}');");
+                connection.Execute($"INSERT OR IGNORE INTO kinship (id_parent1, id_parent2,id_child) VALUES ('{currentChara.id}','{partnerChara.id}','{childChara.id}');");
             }
         }
 

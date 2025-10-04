@@ -3,7 +3,8 @@ using UnityEngine;
 public class AddTree : MonoBehaviour
 {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [ContextMenu("Add Tree ( Hard )")]
+    void Add2Tree()
     {
         string ZCChildren = "Haru_Hiro_Lila_Lily_Iris_Mia_Loan";
         CharacterDB Zekio = new CharacterDB("Zekio", "Claire", ZCChildren);

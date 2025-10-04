@@ -34,11 +34,15 @@ public class DBView : EditorWindow
 
     static List<EngagedData> resultsPartner;
 
+    Vector2 scrollPosEngaged = new Vector2(600, 0);
+
     #endregion
 
     #region --- Kinship Table Members ---
 
     static List<KinshipData> resultsKinship;
+
+    Vector2 scrollPosKinship = new Vector2(600, 0);
 
     #endregion
 
@@ -47,8 +51,20 @@ public class DBView : EditorWindow
     {
         GetWindow<DBView>("DB View");
         connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
-        connection.Execute("CREATE TABLE IF NOT EXISTS engaged(id_wife INTEGER NOT NULL, id_husband INTEGER NOT NULL, PRIMARY KEY (id_wife,id_husband), CONSTRAINT fk_idwife FOREIGN KEY (id_wife) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idhusband FOREIGN KEY (id_husband) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
-        connection.Execute("CREATE TABLE IF NOT EXISTS kinship(id_parent INTEGER NOT NULL, id_child INTEGER NOT NULL, PRIMARY KEY (id_parent,id_child), CONSTRAINT fk_idparent FOREIGN KEY (id_parent) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+        connection.Execute("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT UNIQUE);");
+
+        connection.Execute("CREATE TABLE IF NOT EXISTS engaged" +
+            "(id_spouse1 INTEGER NOT NULL, id_spouse2 INTEGER NOT NULL, " +
+            "PRIMARY KEY (id_spouse1,id_spouse2), " +
+            "CONSTRAINT fk_idspouse1 FOREIGN KEY (id_spouse1) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
+            "CONSTRAINT fk_idspouse2 FOREIGN KEY (id_spouse2) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+
+        connection.Execute("CREATE TABLE IF NOT EXISTS kinship" +
+            "(id_parent1 INTEGER NOT NULL,id_parent2 INTEGER NOT NULL, id_child INTEGER NOT NULL," +
+            " PRIMARY KEY (id_parent1, id_parent2,id_child), " +
+            "CONSTRAINT fk_idparent1 FOREIGN KEY (id_parent1) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
+            "CONSTRAINT fk_idparent2 FOREIGN KEY (id_parent2) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
+            "CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
 
         resultsCharacter = connection.Query<CharacterDataNew>("SELECT * FROM character");
         resultsPartner = connection.Query<EngagedData>("SELECT * FROM engaged");
@@ -98,7 +114,38 @@ public class DBView : EditorWindow
 
     void UpdateDB()
     {
-        
+        #region --- Character Table Update ---
+
+        foreach (CharacterDataNew character in resultsCharacter)
+        {
+            connection.Execute($"UPDATE character SET cName = '{character.CName}' WHERE id = {character.id};");
+        }
+
+        resultsCharacter = connection.Query<CharacterDataNew>("SELECT * FROM character");
+
+        #endregion
+
+        #region --- Engaged Table Update ---
+
+        foreach (EngagedData partner in resultsPartner)
+        {
+            connection.Execute($"UPDATE engaged SET id_spouse1 = {partner.id_spouse1}, id_spouse2 = {partner.id_spouse2} WHERE id_spouse1 = {partner.id_spouse1} AND id_spouse2 = {partner.id_spouse2};");
+        }
+
+        resultsPartner = connection.Query<EngagedData>("SELECT * FROM engaged");
+
+        #endregion
+
+        #region --- Kinship Table Update ---
+
+        foreach (KinshipData kinship in resultsKinship)
+        {
+            connection.Execute($"UPDATE kinship SET id_parent1 = {kinship.id_parent1}, id_parent2 = {kinship.id_parent2}, id_child = {kinship.id_child} WHERE id_parent1 = {kinship.id_parent1} AND id_parent2 = {kinship.id_parent2} AND id_child = {kinship.id_child};");
+        }
+
+        resultsKinship = connection.Query<KinshipData>("SELECT * FROM kinship");
+
+        #endregion
 
         connection.Close();
         connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
@@ -123,8 +170,20 @@ public class DBView : EditorWindow
 
         // Recreate the data base
         connection.Execute("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT UNIQUE);");
-        connection.Execute("CREATE TABLE IF NOT EXISTS engaged(id_wife INTEGER NOT NULL, id_husband INTEGER NOT NULL, PRIMARY KEY (id_wife,id_husband), CONSTRAINT fk_idwife FOREIGN KEY (id_wife) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idhusband FOREIGN KEY (id_husband) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
-        connection.Execute("CREATE TABLE IF NOT EXISTS kinship(id_parent INTEGER NOT NULL, id_child INTEGER NOT NULL, PRIMARY KEY (id_parent,id_child), CONSTRAINT fk_idparent FOREIGN KEY (id_parent) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+
+        connection.Execute("CREATE TABLE IF NOT EXISTS engaged" +
+            "(id_spouse1 INTEGER NOT NULL, id_spouse2 INTEGER NOT NULL, " +
+            "PRIMARY KEY (id_spouse1,id_spouse2), " +
+            "CONSTRAINT fk_idspouse1 FOREIGN KEY (id_spouse1) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
+            "CONSTRAINT fk_idspouse2 FOREIGN KEY (id_spouse2) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+
+        connection.Execute("CREATE TABLE IF NOT EXISTS kinship" +
+            "(id_parent1 INTEGER NOT NULL,id_parent2 INTEGER NOT NULL, id_child INTEGER NOT NULL," +
+            " PRIMARY KEY (id_parent1, id_parent2,id_child), " +
+            "CONSTRAINT fk_idparent1 FOREIGN KEY (id_parent1) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
+            "CONSTRAINT fk_idparent2 FOREIGN KEY (id_parent2) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
+            "CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+
 
         SQLiteConnection backupConnection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfronBackup.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
 
@@ -140,26 +199,26 @@ public class DBView : EditorWindow
 
         #endregion
 
-        #region --- Kinship Table Restore ---
+        #region --- Engaged Table Restore ---
 
         List<EngagedData> backupPartner = connection.Query<EngagedData>("SELECT * FROM partner");
 
         foreach (EngagedData character in backupPartner)
         {
-            connection.Execute($"INSERT INTO engaged (id_wife, id_husband) VALUES ({character.id_wife}, '{character.id_husband}');");
+            connection.Execute($"INSERT INTO engaged (id_spouse1, id_spouse2) VALUES ({character.id_spouse2}, '{character.id_spouse1}');");
         }
 
         resultsPartner = connection.Query<EngagedData>("SELECT * FROM partner");
 
         #endregion
 
-        #region --- Engaged Table Restore ---
+        #region --- Kinship Table Restore ---
 
         List<KinshipData> backupKinship = connection.Query<KinshipData>("SELECT * FROM kinship");
 
         foreach (KinshipData character in backupKinship)
         {
-            connection.Execute($"INSERT INTO kinship (id_parent, id_child) VALUES ({character.id_parent}, '{character.id_child}');");
+            connection.Execute($"INSERT INTO kinship (id_parent1, id_parent2, id_child) VALUES ({character.id_parent1}, '{character.id_parent2}', '{character.id_child}');");
         }
 
         resultsKinship = connection.Query<KinshipData>("SELECT * FROM kinship");
@@ -177,8 +236,6 @@ public class DBView : EditorWindow
         GUILayout.BeginHorizontal();
 
         GUILayout.Label("cName", GUILayout.Width(200));
-        GUILayout.Label("Partner", GUILayout.Width(200));
-        GUILayout.Label("Children", GUILayout.Width(200));
 
         GUILayout.EndHorizontal();
 
@@ -215,6 +272,41 @@ public class DBView : EditorWindow
     void DrawEngagedTable()
     {
         GUILayout.Label("Engaged Table", EditorStyles.boldLabel);
+
+        GUILayout.BeginHorizontal();
+
+        GUILayout.Label("Spouse1", GUILayout.Width(200));
+        GUILayout.Label("Spouse2", GUILayout.Width(200));
+
+        GUILayout.EndHorizontal();
+
+        scrollPosEngaged = GUILayout.BeginScrollView(scrollPosEngaged, false, true, GUILayout.Width(660));
+
+        foreach (EngagedData r in resultsPartner)
+        {
+            GUILayout.BeginHorizontal();
+
+            CharacterDataNew spouse1 = resultsCharacter.FirstOrDefault(c => c.id == r.id_spouse1);
+            CharacterDataNew spouse2 = resultsCharacter.FirstOrDefault(c => c.id == r.id_spouse2);
+
+            GUILayout.Label(spouse1.CName, GUILayout.Width(200));
+            GUILayout.Label(spouse2.CName, GUILayout.Width(200));
+
+            if (GUILayout.Button("-", GUILayout.Width(30)))
+            {
+                DeleteEngaged(r);
+            }
+            GUILayout.EndHorizontal();
+        }
+
+        GUILayout.EndScrollView();
+    }
+
+    void DeleteEngaged(EngagedData engaged)
+    {
+        connection.Execute($"DELETE FROM engaged WHERE id_spouse2={engaged.id_spouse2} AND id_spouse1={engaged.id_spouse1}");
+
+        UpdateDB();
     }
 
     #endregion
@@ -224,6 +316,40 @@ public class DBView : EditorWindow
     void DrawKinshipTable()
     {
         GUILayout.Label("Kinship Table", EditorStyles.boldLabel);
+
+        GUILayout.BeginHorizontal();
+
+        GUILayout.Label("Parent1", GUILayout.Width(200));
+        GUILayout.Label("Parent2", GUILayout.Width(200));
+        GUILayout.Label("Child", GUILayout.Width(200));
+
+        GUILayout.EndHorizontal();
+
+        scrollPosKinship = GUILayout.BeginScrollView(scrollPosKinship, false, true, GUILayout.Width(665));
+
+        foreach (KinshipData r in resultsKinship)
+        {
+            GUILayout.BeginHorizontal();
+            CharacterDataNew parent1 = resultsCharacter.FirstOrDefault(c => c.id == r.id_parent1);
+            CharacterDataNew parent2 = resultsCharacter.FirstOrDefault(c => c.id == r.id_parent2);
+            CharacterDataNew child = resultsCharacter.FirstOrDefault(c => c.id == r.id_child);
+            GUILayout.Label(parent1.CName, GUILayout.Width(200));
+            GUILayout.Label(parent2.CName, GUILayout.Width(200));
+            GUILayout.Label(child.CName, GUILayout.Width(200));
+            if (GUILayout.Button("-", GUILayout.Width(30)))
+            {
+                DeleteKinship(r);
+            }
+            GUILayout.EndHorizontal();
+        }
+
+        GUILayout.EndScrollView();
+    }
+
+    void DeleteKinship(KinshipData kinship)
+    {
+        connection.Execute($"DELETE FROM kinship WHERE id_parent1={kinship.id_parent1} AND id_parent2={kinship.id_parent2} AND id_child={kinship.id_child}");
+        UpdateDB();
     }
 
     #endregion

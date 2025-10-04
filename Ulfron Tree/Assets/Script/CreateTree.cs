@@ -34,7 +34,7 @@ public class CreateTree : MonoBehaviour
 
     void GenerateCase(CharacterDB currentChara, Vector2 pos)
     {
-        CharacterDataNew partnerChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_husband FROM engaged WHERE id_wife={currentChara.data.id} UNION SELECT id_wife FROM engaged WHERE id_husband={currentChara.data.id});").FirstOrDefault();
+        CharacterDataNew partnerChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_spouse1 FROM engaged WHERE id_spouse2={currentChara.data.id} UNION SELECT id_spouse2 FROM engaged WHERE id_spouse1={currentChara.data.id});").FirstOrDefault();
         if (partnerChara != null)
         {
             GameObject newBar = Instantiate(prefabBarHorizontal);
@@ -57,7 +57,7 @@ public class CreateTree : MonoBehaviour
             Vector2 foo = pos;
             foo.x -= 200;
             newCase.transform.position = foo;
-            List<CharacterDataNew> children = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_child FROM kinship WHERE id_parent='{currentChara.data.id}');");
+            List<CharacterDataNew> children = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_child FROM kinship WHERE id_parent1='{currentChara.data.id}' OR id_parent2='{currentChara.data.id}');");
             if (children.Count > 0)
             {
                 GenerateChildren(children, pos);
@@ -129,8 +129,8 @@ public class CreateTree : MonoBehaviour
                 ((RectTransform)barSiblingsToCase.transform).sizeDelta = new Vector2(10, 200); ;
                 barSiblingsToCase.transform.SetParent(transform, false);
 
-                List<CharacterDataNew> granchildren = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_child FROM kinship WHERE id_parent='{children[i].id}');");
-                CharacterDataNew partnerChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_husband FROM engaged WHERE id_wife={children[i].id} UNION SELECT id_wife FROM engaged WHERE id_husband={children[i].id});").FirstOrDefault();
+                List<CharacterDataNew> granchildren = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_child FROM kinship WHERE id_parent1='{children[i].id}' OR id_parent2='{children[i].id}');");
+                CharacterDataNew partnerChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_spouse1 FROM engaged WHERE id_spouse2={children[i].id} UNION SELECT id_spouse2 FROM engaged WHERE id_spouse1={children[i].id});").FirstOrDefault();
 
 
                 // Décalage du précédent siblings si il n'est pas le premier de la liste
@@ -184,8 +184,8 @@ public class CreateTree : MonoBehaviour
         {
             int tempResult = 300;
 
-            List<CharacterDataNew> granchildren = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_child FROM kinship WHERE id_parent='{children[i].id}');");
-            CharacterDataNew partnerChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_husband FROM engaged WHERE id_wife={children[i].id} UNION SELECT id_wife FROM engaged WHERE id_husband={children[i].id});").FirstOrDefault();
+            List<CharacterDataNew> granchildren = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_child FROM kinship WHERE id_parent1='{children[i].id}' OR id_parent2='{children[i].id}');");
+            CharacterDataNew partnerChara = connection.Query<CharacterDataNew>($"SELECT * FROM character WHERE id IN (SELECT id_spouse1 FROM engaged WHERE id_spouse2= {children[i].id}  UNION SELECT id_spouse2 FROM engaged WHERE id_spouse1={children[i].id});").FirstOrDefault();
 
             if (granchildren.Count > 2)
             {
