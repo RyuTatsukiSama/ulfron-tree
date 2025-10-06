@@ -5,12 +5,6 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-// ---- Warning ----
-// In this code you have 2 #region Dead Code
-// This code is currently dead because it make
-// the work more complicated and those function are not that useful
-// But i keep it in case i would want to finish them
-
 public class DBView : EditorWindow
 {
     #region --- Shared Members ---
