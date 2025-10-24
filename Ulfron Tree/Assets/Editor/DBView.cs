@@ -1,3 +1,4 @@
+using ExtensionSQLite;
 using SQLite4Unity3d;
 using System.Collections.Generic;
 using System.IO;
@@ -7,6 +8,9 @@ using UnityEngine;
 
 public class DBView : EditorWindow
 {
+    // use this to make the DB view modulable
+    // List<TableData> res = connection.Query<TableData>("SELECT name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%';");
+
     #region --- Shared Members ---
 
     public static SQLiteConnection connection;
@@ -92,33 +96,27 @@ public class DBView : EditorWindow
 
     void UpdateDB()
     {
-        
-
         connection.Close();
-        connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
+        connection = SQLiteExtensions.OpenUlfronTable();
     }
 
     void CreateBackup()
     {
-        if (File.Exists(Application.dataPath + "/StreamingAssets/ulfronBackup.db"))
+        if (File.Exists(Application.streamingAssetsPath + "/ulfronBackup.db"))
         {
-            File.Delete(Application.dataPath + "/StreamingAssets/ulfronBackup.db");
+            File.Delete(Application.streamingAssetsPath + "/ulfronBackup.db");
         }
 
-        File.Copy(Application.dataPath + "/StreamingAssets/ulfron.db", Application.dataPath + "/StreamingAssets/ulfronBackup.db");
+        File.Copy(Application.streamingAssetsPath + "/ulfron.db", Application.streamingAssetsPath + "/ulfronBackup.db");
     }
 
     void RestoreBackup()
     {
         // Destroy the data base
-        connection.Execute("DROP TABLE IF EXISTS character");
-        connection.Execute("DROP TABLE IF EXISTS engaged");
-        connection.Execute("DROP TABLE IF EXISTS kinship");
+        connection.DropUlfrontTable();
 
         // Recreate the data base
-        connection.Execute("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT UNIQUE);");
-        connection.Execute("CREATE TABLE IF NOT EXISTS engaged(id_wife INTEGER NOT NULL, id_husband INTEGER NOT NULL, PRIMARY KEY (id_wife,id_husband), CONSTRAINT fk_idwife FOREIGN KEY (id_wife) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idhusband FOREIGN KEY (id_husband) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
-        connection.Execute("CREATE TABLE IF NOT EXISTS kinship(id_parent INTEGER NOT NULL, id_child INTEGER NOT NULL, PRIMARY KEY (id_parent,id_child), CONSTRAINT fk_idparent FOREIGN KEY (id_parent) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+        connection.CreateUlfronTable();
 
         SQLiteConnection backupConnection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfronBackup.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
 
@@ -136,20 +134,20 @@ public class DBView : EditorWindow
 
         #region --- Kinship Table Restore ---
 
-        List<EngagedData> backupPartner = connection.Query<EngagedData>("SELECT * FROM partner");
+        List<EngagedData> backupPartner = backupConnection.Query<EngagedData>("SELECT * FROM engaged");
 
         foreach (EngagedData character in backupPartner)
         {
             connection.Execute($"INSERT INTO engaged (id_wife, id_husband) VALUES ({character.id_wife}, '{character.id_husband}');");
         }
 
-        resultsPartner = connection.Query<EngagedData>("SELECT * FROM partner");
+        resultsPartner = connection.Query<EngagedData>("SELECT * FROM engaged");
 
         #endregion
 
         #region --- Engaged Table Restore ---
 
-        List<KinshipData> backupKinship = connection.Query<KinshipData>("SELECT * FROM kinship");
+        List<KinshipData> backupKinship = backupConnection.Query<KinshipData>("SELECT * FROM kinship");
 
         foreach (KinshipData character in backupKinship)
         {
