@@ -9,21 +9,21 @@ public class ConnectionDB : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
-        connection.OpenUlfronTable();
+        connection = SQLiteExtensions.OpenUlfronTable();
     }
 
     [ContextMenu("Create DB")]
     public void Create()
     {
 
-        connection = new SQLiteConnection(Application.streamingAssetsPath + "/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
+        connection = SQLiteExtensions.OpenUlfronTable();
         connection.CreateUlfronTable();
     }
 
     [ContextMenu("Drop")]
     public void DropTable()
     {
-        connection = new SQLiteConnection(Application.streamingAssetsPath + "/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
+        connection = SQLiteExtensions.OpenUlfronTable();
         connection.DropUlfrontTable();
     }
 }
