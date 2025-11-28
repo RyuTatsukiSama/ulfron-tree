@@ -1,7 +1,6 @@
 using ExtensionSQLite;
 using SQLite4Unity3d;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -50,7 +49,16 @@ public class NewDBView : EditorWindow
 
     public Tab CreateTabTable(string _name)
     {
-        Tab tab = new Tab(_name);
+        Tab tab = null;
+
+        if (_name == "character")
+        {
+            tab = new CharacterTab(_name, connection);
+        }
+        else
+        {
+            tab = new Tab(_name);
+        }
 
 
 
