@@ -1,5 +1,6 @@
 using SQLite4Unity3d;
 using UnityEngine;
+using ExtensionSQLite;
 
 public class ConnectionDB : MonoBehaviour
 {
@@ -8,7 +9,7 @@ public class ConnectionDB : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
-        connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
+        connection = SQLiteExtensions.OpenUlfronTable();
     }
 
     [ContextMenu("Create DB")]
@@ -30,18 +31,15 @@ public class ConnectionDB : MonoBehaviour
             "CONSTRAINT fk_idparent1 FOREIGN KEY (id_parent1) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
             "CONSTRAINT fk_idparent2 FOREIGN KEY (id_parent2) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
             "CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
-        
+        // connection = SQLiteExtensions.OpenUlfronTable();
+        // connection.CreateUlfronTable(); // TODO : Fix this conflict
         connection.Close();
     }
 
     [ContextMenu("Drop")]
     public void DropTable()
     {
-        connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
-        connection.Execute("DROP TABLE IF EXISTS character");
-        connection.Execute("DROP TABLE IF EXISTS engaged");
-        connection.Execute("DROP TABLE IF EXISTS kinship");
-
-        connection.Close();
+        connection = SQLiteExtensions.OpenUlfronTable();
+        connection.DropUlfrontTable();
     }
 }

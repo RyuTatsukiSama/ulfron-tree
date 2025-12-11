@@ -1,3 +1,4 @@
+using ExtensionSQLite;
 using SQLite4Unity3d;
 using System.Collections.Generic;
 using System.IO;
@@ -5,14 +6,11 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-// ---- Warning ----
-// In this code you have 2 #region Dead Code
-// This code is currently dead because it make
-// the work more complicated and those function are not that useful
-// But i keep it in case i would want to finish them
-
 public class DBView : EditorWindow
 {
+    // use this to make the DB view modulable
+    // List<TableData> res = connection.Query<TableData>("SELECT name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%';");
+
     #region --- Shared Members ---
 
     public static SQLiteConnection connection;
@@ -50,21 +48,10 @@ public class DBView : EditorWindow
     public static void ShowView()
     {
         GetWindow<DBView>("DB View");
+        // connection = SQLiteExtensions.OpenUlfronTable(); // TODO : Fix this conflict
         connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
-        connection.Execute("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT UNIQUE);");
-
-        connection.Execute("CREATE TABLE IF NOT EXISTS engaged" +
-            "(id_spouse1 INTEGER NOT NULL, id_spouse2 INTEGER NOT NULL, " +
-            "PRIMARY KEY (id_spouse1,id_spouse2), " +
-            "CONSTRAINT fk_idspouse1 FOREIGN KEY (id_spouse1) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
-            "CONSTRAINT fk_idspouse2 FOREIGN KEY (id_spouse2) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
-
-        connection.Execute("CREATE TABLE IF NOT EXISTS kinship" +
-            "(id_parent1 INTEGER NOT NULL,id_parent2 INTEGER NOT NULL, id_child INTEGER NOT NULL," +
-            " PRIMARY KEY (id_parent1, id_parent2,id_child), " +
-            "CONSTRAINT fk_idparent1 FOREIGN KEY (id_parent1) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
-            "CONSTRAINT fk_idparent2 FOREIGN KEY (id_parent2) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
-            "CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+        connection.Execute("CREATE TABLE IF NOT EXISTS engaged(id_wife INTEGER NOT NULL, id_husband INTEGER NOT NULL, PRIMARY KEY (id_wife,id_husband), CONSTRAINT fk_idwife FOREIGN KEY (id_wife) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idhusband FOREIGN KEY (id_husband) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+        connection.Execute("CREATE TABLE IF NOT EXISTS kinship(id_parent INTEGER NOT NULL, id_child INTEGER NOT NULL, PRIMARY KEY (id_parent,id_child), CONSTRAINT fk_idparent FOREIGN KEY (id_parent) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
 
         resultsCharacter = connection.Query<CharacterDataNew>("SELECT * FROM character");
         resultsPartner = connection.Query<EngagedData>("SELECT * FROM engaged");
@@ -114,61 +101,29 @@ public class DBView : EditorWindow
 
     void UpdateDB()
     {
-        #region --- Character Table Update ---
 
-        foreach (CharacterDataNew character in resultsCharacter)
-        {
-            connection.Execute($"UPDATE character SET cName = '{character.CName}' WHERE id = {character.id};");
-        }
-
-        resultsCharacter = connection.Query<CharacterDataNew>("SELECT * FROM character");
-
-        #endregion
-
-        #region --- Engaged Table Update ---
-
-        foreach (EngagedData partner in resultsPartner)
-        {
-            connection.Execute($"UPDATE engaged SET id_spouse1 = {partner.id_spouse1}, id_spouse2 = {partner.id_spouse2} WHERE id_spouse1 = {partner.id_spouse1} AND id_spouse2 = {partner.id_spouse2};");
-        }
-
-        resultsPartner = connection.Query<EngagedData>("SELECT * FROM engaged");
-
-        #endregion
-
-        #region --- Kinship Table Update ---
-
-        foreach (KinshipData kinship in resultsKinship)
-        {
-            connection.Execute($"UPDATE kinship SET id_parent1 = {kinship.id_parent1}, id_parent2 = {kinship.id_parent2}, id_child = {kinship.id_child} WHERE id_parent1 = {kinship.id_parent1} AND id_parent2 = {kinship.id_parent2} AND id_child = {kinship.id_child};");
-        }
-
-        resultsKinship = connection.Query<KinshipData>("SELECT * FROM kinship");
-
-        #endregion
 
         connection.Close();
-        connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
+        connection = SQLiteExtensions.OpenUlfronTable();
     }
 
     void CreateBackup()
     {
-        if (File.Exists(Application.dataPath + "/StreamingAssets/ulfronBackup.db"))
+        if (File.Exists(Application.streamingAssetsPath + "/ulfronBackup.db"))
         {
-            File.Delete(Application.dataPath + "/StreamingAssets/ulfronBackup.db");
+            File.Delete(Application.streamingAssetsPath + "/ulfronBackup.db");
         }
 
-        File.Copy(Application.dataPath + "/StreamingAssets/ulfron.db", Application.dataPath + "/StreamingAssets/ulfronBackup.db");
+        File.Copy(Application.streamingAssetsPath + "/ulfron.db", Application.streamingAssetsPath + "/ulfronBackup.db");
     }
 
     void RestoreBackup()
     {
         // Destroy the data base
-        connection.Execute("DROP TABLE IF EXISTS character");
-        connection.Execute("DROP TABLE IF EXISTS engaged");
-        connection.Execute("DROP TABLE IF EXISTS kinship");
+        connection.DropUlfrontTable();
 
         // Recreate the data base
+        // connection.CreateUlfronTable(); // TODO : Fix this conflict
         connection.Execute("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT UNIQUE);");
 
         connection.Execute("CREATE TABLE IF NOT EXISTS engaged" +
@@ -201,20 +156,20 @@ public class DBView : EditorWindow
 
         #region --- Engaged Table Restore ---
 
-        List<EngagedData> backupPartner = connection.Query<EngagedData>("SELECT * FROM partner");
+        List<EngagedData> backupPartner = backupConnection.Query<EngagedData>("SELECT * FROM engaged");
 
         foreach (EngagedData character in backupPartner)
         {
             connection.Execute($"INSERT INTO engaged (id_spouse1, id_spouse2) VALUES ({character.id_spouse2}, '{character.id_spouse1}');");
         }
 
-        resultsPartner = connection.Query<EngagedData>("SELECT * FROM partner");
+        resultsPartner = connection.Query<EngagedData>("SELECT * FROM engaged");
 
         #endregion
 
         #region --- Kinship Table Restore ---
 
-        List<KinshipData> backupKinship = connection.Query<KinshipData>("SELECT * FROM kinship");
+        List<KinshipData> backupKinship = backupConnection.Query<KinshipData>("SELECT * FROM kinship");
 
         foreach (KinshipData character in backupKinship)
         {
