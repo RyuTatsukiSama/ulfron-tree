@@ -51,16 +51,21 @@ public class NewDBView : EditorWindow
     {
         Tab tab = null;
 
-        if (_name == "character")
+        switch (_name)
         {
-            tab = new CharacterTab(_name, connection);
+            case "character":
+                tab = new CharacterTab(_name, connection);
+                break;
+            case "engaged":
+                tab = new EngangedTab(_name, connection);
+                break;
+            case "kinship":
+                tab = new KinshipTab(_name, connection);
+                break;
+            default:
+                tab = new Tab(_name);
+                break;
         }
-        else
-        {
-            tab = new Tab(_name);
-        }
-
-
 
         return tab;
     }

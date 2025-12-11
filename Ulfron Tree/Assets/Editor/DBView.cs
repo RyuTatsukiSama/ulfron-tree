@@ -48,10 +48,7 @@ public class DBView : EditorWindow
     public static void ShowView()
     {
         GetWindow<DBView>("DB View");
-        // connection = SQLiteExtensions.OpenUlfronTable(); // TODO : Fix this conflict
-        connection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
-        connection.Execute("CREATE TABLE IF NOT EXISTS engaged(id_wife INTEGER NOT NULL, id_husband INTEGER NOT NULL, PRIMARY KEY (id_wife,id_husband), CONSTRAINT fk_idwife FOREIGN KEY (id_wife) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idhusband FOREIGN KEY (id_husband) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
-        connection.Execute("CREATE TABLE IF NOT EXISTS kinship(id_parent INTEGER NOT NULL, id_child INTEGER NOT NULL, PRIMARY KEY (id_parent,id_child), CONSTRAINT fk_idparent FOREIGN KEY (id_parent) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+        connection = SQLiteExtensions.OpenUlfronTable(); // TODO : Fix this conflict
 
         resultsCharacter = connection.Query<CharacterDataNew>("SELECT * FROM character");
         resultsPartner = connection.Query<EngagedData>("SELECT * FROM engaged");
@@ -123,22 +120,7 @@ public class DBView : EditorWindow
         connection.DropUlfrontTable();
 
         // Recreate the data base
-        // connection.CreateUlfronTable(); // TODO : Fix this conflict
-        connection.Execute("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT UNIQUE);");
-
-        connection.Execute("CREATE TABLE IF NOT EXISTS engaged" +
-            "(id_spouse1 INTEGER NOT NULL, id_spouse2 INTEGER NOT NULL, " +
-            "PRIMARY KEY (id_spouse1,id_spouse2), " +
-            "CONSTRAINT fk_idspouse1 FOREIGN KEY (id_spouse1) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
-            "CONSTRAINT fk_idspouse2 FOREIGN KEY (id_spouse2) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
-
-        connection.Execute("CREATE TABLE IF NOT EXISTS kinship" +
-            "(id_parent1 INTEGER NOT NULL,id_parent2 INTEGER NOT NULL, id_child INTEGER NOT NULL," +
-            " PRIMARY KEY (id_parent1, id_parent2,id_child), " +
-            "CONSTRAINT fk_idparent1 FOREIGN KEY (id_parent1) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
-            "CONSTRAINT fk_idparent2 FOREIGN KEY (id_parent2) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
-            "CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
-
+        connection.CreateUlfronTable();
 
         SQLiteConnection backupConnection = new SQLiteConnection(Application.dataPath + "/StreamingAssets/ulfronBackup.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
 

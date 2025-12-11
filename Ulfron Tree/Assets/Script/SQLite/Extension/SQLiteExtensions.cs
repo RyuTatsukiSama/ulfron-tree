@@ -10,8 +10,19 @@ namespace ExtensionSQLite
         public static void CreateUlfronTable(this SQLiteConnection connection)
         {
             connection.Execute("CREATE TABLE IF NOT EXISTS character(id INTEGER PRIMARY KEY, CName TEXT UNIQUE);");
-            connection.Execute("CREATE TABLE IF NOT EXISTS engaged(id_wife INTEGER NOT NULL, id_husband INTEGER NOT NULL, PRIMARY KEY (id_wife,id_husband), CONSTRAINT fk_idwife FOREIGN KEY (id_wife) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idhusband FOREIGN KEY (id_husband) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
-            connection.Execute("CREATE TABLE IF NOT EXISTS kinship(id_parent INTEGER NOT NULL, id_child INTEGER NOT NULL, PRIMARY KEY (id_parent,id_child), CONSTRAINT fk_idparent FOREIGN KEY (id_parent) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+
+            connection.Execute("CREATE TABLE IF NOT EXISTS engaged" +
+                "(id_spouse1 INTEGER NOT NULL, id_spouse2 INTEGER NOT NULL, " +
+                "PRIMARY KEY (id_spouse1,id_spouse2), " +
+                "CONSTRAINT fk_idspouse1 FOREIGN KEY (id_spouse1) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
+                "CONSTRAINT fk_idspouse2 FOREIGN KEY (id_spouse2) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
+
+            connection.Execute("CREATE TABLE IF NOT EXISTS kinship" +
+                "(id_parent1 INTEGER NOT NULL,id_parent2 INTEGER NOT NULL, id_child INTEGER NOT NULL," +
+                " PRIMARY KEY (id_parent1, id_parent2,id_child), " +
+                "CONSTRAINT fk_idparent1 FOREIGN KEY (id_parent1) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
+                "CONSTRAINT fk_idparent2 FOREIGN KEY (id_parent2) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE, " +
+                "CONSTRAINT fk_idchild FOREIGN KEY (id_child) REFERENCES character(id) ON UPDATE CASCADE ON DELETE CASCADE);");
         }
 
         public static void DropUlfrontTable(this SQLiteConnection connection)
@@ -24,6 +35,7 @@ namespace ExtensionSQLite
         public static SQLiteConnection OpenUlfronTable()
         {
             SQLiteConnection connection = new SQLiteConnection(Application.streamingAssetsPath + "/ulfron.db", SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
+
             return connection;
         }
     }
