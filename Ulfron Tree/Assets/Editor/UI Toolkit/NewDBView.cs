@@ -19,7 +19,7 @@ public class NewDBView : EditorWindow
     private SQLiteConnection connection;
 
     [MenuItem("DataBase/NewDBView")]
-    public static void ShowExample()
+    public static void GetWindow()
     {
         NewDBView wnd = GetWindow<NewDBView>();
         wnd.titleContent = new GUIContent("NewDBView");

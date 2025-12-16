@@ -6,9 +6,18 @@ using System.Linq;
 
 public class CharacterTab : SQLiteTab<CharacterDataNew>
 {
+    Dictionary<string, TextField> pairs = new();
+
+    const float headerSize = 96.8f / 3f;
+
     public CharacterTab(string _tableName, SQLiteConnection _connection) : base(_tableName, _connection)
     {
-        list = connection.Query<CharacterDataNew>($"SELECT * from {_tableName}");
+        LoadTab();
+    }
+
+    void LoadTab()
+    {
+        response = connection.Query<CharacterDataNew>($"SELECT * from {tableName}");
 
         VisualElement headerBox = new VisualElement();
         headerBox.style.flexDirection = FlexDirection.Row;
@@ -20,20 +29,24 @@ public class CharacterTab : SQLiteTab<CharacterDataNew>
         headerBox.style.fontSize = 16;
 
         Label nameHeader = new Label("Name");
-        nameHeader.style.width = new StyleLength(new Length(100f / 3f, LengthUnit.Percent));
+        nameHeader.style.width = new StyleLength(new Length(headerSize, LengthUnit.Percent));
         headerBox.Add(nameHeader);
 
         Label partnerHeader = new Label("Partner");
-        partnerHeader.style.width = new StyleLength(new Length(100f / 3f, LengthUnit.Percent));
+        partnerHeader.style.width = new StyleLength(new Length(headerSize, LengthUnit.Percent));
         headerBox.Add(partnerHeader);
 
         Label childrenHeader = new Label("Children");
-        childrenHeader.style.width = new StyleLength(new Length(100f / 3f, LengthUnit.Percent));
+        childrenHeader.style.width = new StyleLength(new Length(headerSize, LengthUnit.Percent));
         headerBox.Add(childrenHeader);
 
         Add(headerBox);
 
-        foreach (CharacterDataNew data in list)
+        scrollView = new ScrollView(ScrollViewMode.Vertical);
+        scrollView.style.width = new StyleLength(new Length(100, LengthUnit.Percent));
+        scrollView.style.height = new StyleLength(new Length(100, LengthUnit.Percent));
+
+        foreach (CharacterDataNew data in response)
         {
             // Box of a character
             VisualElement box = new VisualElement();
@@ -46,7 +59,8 @@ public class CharacterTab : SQLiteTab<CharacterDataNew>
             TextField nameField = new TextField();
             nameField.value = data.CName;
             nameField.style.flexGrow = 1;
-            nameField.style.width = new StyleLength(new Length(100f / 3f, LengthUnit.Percent));
+            nameField.style.width = new StyleLength(new Length(headerSize, LengthUnit.Percent));
+            pairs[data.CName] = nameField;
 
             box.Add(nameField);
 
@@ -55,7 +69,7 @@ public class CharacterTab : SQLiteTab<CharacterDataNew>
 
             Label partnerLabel = new Label();
             partnerLabel.style.flexGrow = 1;
-            partnerLabel.style.width = new StyleLength(new Length(100f / 3f, LengthUnit.Percent));
+            partnerLabel.style.width = new StyleLength(new Length(headerSize, LengthUnit.Percent));
 
             if (partner != null)
             {
@@ -68,9 +82,9 @@ public class CharacterTab : SQLiteTab<CharacterDataNew>
 
             VisualElement childrenBox = new VisualElement();
             childrenBox.style.flexDirection = FlexDirection.Column;
-            childrenBox.style.width = new StyleLength(new Length(100f / 3f, LengthUnit.Percent));
+            childrenBox.style.width = new StyleLength(new Length(headerSize, LengthUnit.Percent));
 
-            foreach ( CharacterDataNew child in children )
+            foreach (CharacterDataNew child in children)
             {
                 Label childLabel = new Label();
                 childLabel.style.flexGrow = 1;
@@ -80,7 +94,74 @@ public class CharacterTab : SQLiteTab<CharacterDataNew>
 
             box.Add(childrenBox);
 
-            Add(box);
+            Button removeButton = new Button(RemoveFromTable);
+            removeButton.style.width = 10;
+            removeButton.text = "-";
+
+            box.Add(removeButton);
+
+            scrollView.Add(box);
         }
+
+        Button addCharacter = new Button(AddToTable);
+        addCharacter.text = "Add Character";
+
+        scrollView.Add(addCharacter);
+
+        Add(scrollView);
+
+        VisualElement buttonBox = new VisualElement();
+        buttonBox.style.flexDirection = FlexDirection.Row;
+        buttonBox.style.unityTextAlign = TextAnchor.MiddleCenter;
+
+        buttonBox.Add(AddOptionButton(SaveTable, "Save Table"));
+        buttonBox.Add(AddOptionButton(CreateBackUp, "Create Backup"));
+        buttonBox.Add(AddOptionButton(SaveTable, "Restore Backup"));
+
+        Add(buttonBox);
+    }
+
+    void AddToTable()
+    {
+
+    }
+
+    void RemoveFromTable()
+    {
+
+    }
+
+    Button AddOptionButton(System.Action clickEvent, string text)
+    {
+        Button button = new Button(clickEvent);
+        button.style.width = new StyleLength(new Length(100f / 3f, LengthUnit.Percent));
+        button.style.height = 30;
+        button.text = text;
+
+        return button;
+    }
+
+    void SaveTable()
+    {
+        foreach (CharacterDataNew character in response)
+        {
+            if (pairs[character.CName].value != character.CName)
+            {
+                connection.Execute($"UPDATE character SET CName='{pairs[character.CName].value}' WHERE id={character.id}");
+            }
+        }
+
+        Clear();
+        LoadTab();
+    }
+
+    void CreateBackUp()
+    {
+
+    }
+
+    void RestoreBackup()
+    {
+
     }
 }
