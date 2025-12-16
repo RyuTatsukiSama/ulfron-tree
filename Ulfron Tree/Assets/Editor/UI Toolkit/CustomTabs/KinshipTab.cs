@@ -8,8 +8,9 @@ public class KinshipTab : SQLiteTab<KinshipData>
 {
     public KinshipTab(string _tableName, SQLiteConnection _connection) : base(_tableName, _connection)
     {
-        list = connection.Query<KinshipData>($"SELECT * from {_tableName}");
+        response = connection.Query<KinshipData>($"SELECT * from {_tableName}");
 
         Headers();
+        Data();
     }
 }

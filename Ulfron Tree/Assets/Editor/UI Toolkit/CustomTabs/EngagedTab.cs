@@ -8,8 +8,9 @@ public class EngangedTab : SQLiteTab<EngagedData>
 {
     public EngangedTab(string _tableName, SQLiteConnection _connection) : base(_tableName, _connection)
     {
-        list = connection.Query<EngagedData>($"SELECT * from {_tableName}");
+        response = connection.Query<EngagedData>($"SELECT * from {_tableName}");
 
         Headers();
+        Data();
     }
 }
