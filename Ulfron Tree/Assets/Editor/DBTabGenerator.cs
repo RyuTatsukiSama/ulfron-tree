@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class DBTabGenerator : EditorWindow
 {
@@ -12,6 +13,14 @@ public class DBTabGenerator : EditorWindow
         wnd.titleContent = new GUIContent("DB Tab Generator");
     }
 
+    public void CreateGUI()
+    {
+        VisualElement root = rootVisualElement;
+
+        UnityEngine.UIElements.PopupField<MonoBehaviour> testFiled = new();
+
+        root.Add(testFiled);
+    }
 
     void GenerateTab()
     {
