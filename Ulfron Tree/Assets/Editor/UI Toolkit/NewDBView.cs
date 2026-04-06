@@ -44,6 +44,8 @@ public class NewDBView : EditorWindow
             tabView.Add(CreateTabTable(table.name));
         }
 
+        tabView.Add(CreateTabTable("AddCharacter"));
+
         root.Add(tabView);
     }
 
@@ -54,13 +56,13 @@ public class NewDBView : EditorWindow
         switch (_name)
         {
             case "character":
-                tab = new CharacterTab(_name, connection);
+                tab = new CharacterTab(connection);
                 break;
             case "engaged":
-                tab = new EngangedTab(_name, connection);
+                tab = new EngangedTab(connection);
                 break;
             case "kinship":
-                tab = new KinshipTab(_name, connection);
+                tab = new KinshipTab(connection);
                 break;
             default:
                 tab = new Tab(_name);

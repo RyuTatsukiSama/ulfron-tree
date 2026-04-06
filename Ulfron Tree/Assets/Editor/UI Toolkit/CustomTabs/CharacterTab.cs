@@ -10,7 +10,7 @@ public class CharacterTab : SQLiteTab<CharacterDataNew>
 
     const float headerSize = 96.8f / 3f;
 
-    public CharacterTab(string _tableName, SQLiteConnection _connection) : base(_tableName, _connection)
+    public CharacterTab(SQLiteConnection _connection) : base("Character", _connection)
     {
         LoadTab();
     }
@@ -19,6 +19,12 @@ public class CharacterTab : SQLiteTab<CharacterDataNew>
     {
         response = connection.Query<CharacterDataNew>($"SELECT * from {tableName}");
 
+        Headers();
+        Data();
+    }
+
+    new void Headers()
+    {
         VisualElement headerBox = new VisualElement();
         headerBox.style.flexDirection = FlexDirection.Row;
         headerBox.style.display = DisplayStyle.Flex;
@@ -40,8 +46,16 @@ public class CharacterTab : SQLiteTab<CharacterDataNew>
         childrenHeader.style.width = new StyleLength(new Length(headerSize, LengthUnit.Percent));
         headerBox.Add(childrenHeader);
 
-        Add(headerBox);
+        // Just hear to align headers with the box below, this one take the remove button + the scrollbar
+        Label emptyHeader = new Label("");
+        emptyHeader.style.width = new StyleLength(new Length(100 - (headerSize * 3), LengthUnit.Percent));
+        headerBox.Add(emptyHeader);
 
+        Add(headerBox);
+    }
+
+    new void Data()
+    {
         scrollView = new ScrollView(ScrollViewMode.Vertical);
         scrollView.style.width = new StyleLength(new Length(100, LengthUnit.Percent));
         scrollView.style.height = new StyleLength(new Length(100, LengthUnit.Percent));
