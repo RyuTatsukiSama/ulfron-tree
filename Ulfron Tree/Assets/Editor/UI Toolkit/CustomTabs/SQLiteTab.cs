@@ -34,6 +34,10 @@ public class SQLiteTab<T> : Tab where T : new()
             .ToList();
     }
 
+    /// <summary>
+    /// Just here for preview and if you want to just see the table has it is
+    /// Feel free to create a new void Headers() method in the child class
+    /// </summary>
     public void Headers()
     {
         VisualElement headerBox = new VisualElement();
@@ -56,6 +60,10 @@ public class SQLiteTab<T> : Tab where T : new()
         Add(headerBox);
     }
 
+    /// <summary>
+    /// Just here for preview and if you want to just see the table has it is
+    /// Feel free to create a new void Data() method in the child class
+    /// </summary>
     public void Data()
     {
         scrollView = new ScrollView(ScrollViewMode.Vertical);
